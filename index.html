@@ -282,6 +282,29 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
   #sheet-problems:not(.on){display:none!important}
   .prow{break-inside:avoid}
 }
+
+/* ---------- 云同步 ---------- */
+#syncBar{display:none;align-items:center;gap:8px;padding:0 14px 10px;min-height:30px;font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none}
+#syncBar.on{display:flex}
+#syncBar .dot{width:8px;height:8px;border-radius:50%;background:var(--gray);flex:0 0 8px}
+#syncBar.ok .dot{background:var(--green)}
+#syncBar.warn .dot{background:var(--amber)}
+#syncBar.err .dot{background:var(--red)}
+#syncBar .scode{font-weight:700;letter-spacing:1px;color:var(--text)}
+#syncBar .smsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rfield{margin:12px 14px 0}
+.rfield span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.rfield input{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 12px;font-size:15px;text-transform:none;box-sizing:border-box}
+.rfield input.code{text-transform:uppercase;letter-spacing:3px;font-weight:600;text-align:center}
+.rbtns{display:flex;gap:8px;margin:14px 14px 0}
+.rbtns .sbtn{flex:1}
+.roomcode-big{margin:14px 14px 0;text-align:center;font-size:30px;font-weight:700;letter-spacing:6px;padding:14px 0;background:var(--card2);border-radius:12px;color:var(--text)}
+.rstat{margin:12px 14px 0;font-size:12px;color:var(--muted);line-height:1.7}
+.rwarn{margin:12px 14px 0;font-size:11.5px;line-height:1.6;color:var(--amber);background:var(--amber-bg);border-radius:8px;padding:8px 10px}
+.sbtn{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600}
+.sbtn.pri{background:var(--ink);border-color:var(--ink);color:var(--inkText)}
+#menuRoom[hidden]{display:none!important}
+@media print{ #syncBar{display:none!important} }
 </style>
 </head>
 <body>
@@ -312,6 +335,9 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <button data-tab="a">装修验收 <i>68</i></button>
       <button data-tab="s">排期 <i>25</i></button>
     </nav>
+    <div id="syncBar" role="button" aria-label="云同步设置">
+      <span class="dot"></span><span class="scode"></span><span class="smsg"></span>
+    </div>
   </header>
 
   <main id="views"></main>
@@ -358,6 +384,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
         </button>
       </div>
+      <button class="mrow" id="menuRoom" hidden>云同步房间</button>
       <button class="mrow" id="menuPrint">打印当前清单</button>
       <button class="mrow" id="menuGuide">使用说明</button>
       <button class="mrow danger" id="menuReset">清空 / 重置全部记录</button>
@@ -377,6 +404,41 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
     </div>
   </div>
 
+  <div class="sheet" id="roomSheet">
+    <div class="sheet-panel">
+      <div class="sh-head">
+        <h2>云同步</h2>
+        <button class="iconbtn" id="closeRoom" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <div class="sh-body">
+        <div id="roomJoin">
+          <div class="sh-tip">创建房间后，把房间码或链接发给家人/施工方，大家共用同一份勾选进度。</div>
+          <label class="rfield"><span>你的昵称（可选，显示在同步记录里）</span><input id="roomNick" type="text" maxlength="12" placeholder="如：业主小李"></label>
+          <label class="rfield"><span>房间码（加入已有房间时填写）</span><input id="roomCodeInput" class="code" type="text" maxlength="6" placeholder="6 位房间码"></label>
+          <div class="rbtns">
+            <button class="sbtn" id="btnJoinRoom">加入房间</button>
+            <button class="sbtn pri" id="btnCreateRoom">创建新房间</button>
+          </div>
+          <div class="rwarn">说明：房间码即访问凭证，知道房间码的人都能读写进度，请勿发给无关人员。</div>
+        </div>
+        <div id="roomInfo" hidden>
+          <div class="sh-tip">当前房间码（点一下可复制邀请链接）</div>
+          <div class="roomcode-big" id="roomCodeBig" role="button">------</div>
+          <div class="rstat" id="roomStat"></div>
+          <div class="rbtns">
+            <button class="sbtn" id="btnSyncNow">立即同步</button>
+            <button class="sbtn" id="btnCopyLink">复制邀请链接</button>
+            <button class="sbtn" id="btnLeaveRoom">退出房间</button>
+          </div>
+          <label class="rfield"><span>昵称（可选）</span><input id="roomNick2" type="text" maxlength="12" placeholder="如：业主小李"></label>
+          <div class="rwarn">说明：房间码即访问凭证。云端不校验成员身份，拿到房间码和页面地址的人理论上可以读写本房间数据；「清空/重置」会同时清掉云端数据。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -387,6 +449,14 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 (function(){
   'use strict';
   var KEY = 'xf_manage_v1';
+
+  /* ================= 云同步配置 =================
+     开通 Supabase 后，把下面两个常量替换为你的项目值即可启用多人共享；
+     留空则自动回退为纯本地模式（行为与未改造版本完全一致）。 */
+  var SUPABASE_URL = 'https://niinsaxncfddixkbdkeb.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5paW5zYXhuY2ZkZGl4a2Jka2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1ODk3MzAsImV4cCI6MjEwOTE2NTczMH0.tUippEqL3uoW47oJlSBlLz-XYDzwNLqCpuZzhOeb8ak';
+  /* ============================================== */
+
   var MODS = ['v','a'];
   var TOTAL_CHECK = 0;
 
@@ -437,6 +507,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   var saveTimer = 0;
   function save(){
     try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+    if(!applyingRemote) pushSoon();
   }
   function saveSoon(){
     clearTimeout(saveTimer);
@@ -666,6 +737,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   function setStatus(id, st){
     if(st === 'n') delete S.items[id]; else S.items[id] = st;
+    markDirty(id);
     var info = ITEM_MAP[id];
     save();
     refreshItem(id);
@@ -748,11 +820,13 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   function toggleAct(id, card){
     if(S.acts[id]) delete S.acts[id]; else S.acts[id] = true;
+    markDirty(id);
     var s = D.schedule.stages.filter(function(x){ return x.id === card.dataset.sid; })[0];
     var d = s.acts.filter(function(a){ return S.acts[a.id]; }).length;
     if(d === s.acts.length) S.stages[s.id] = 'd';
     else if(d > 0) S.stages[s.id] = 'p';
     else if(S.stages[s.id] === 'd' || S.stages[s.id] === 'p') S.stages[s.id] = 'n';
+    markDirty(s.id);
     save();
     updateSchedule();
   }
@@ -983,6 +1057,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(seg){
       var sid = seg.closest('.sseg').dataset.sid;
       S.stages[sid] = seg.dataset.v;
+      markDirty(sid);
       save();
       updateSchedule();
       return;
@@ -1005,10 +1080,43 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(t.closest('#probBtn')){ renderProblems(); openSheet('sheetProblems'); return; }
     if(t.closest('#closeProb')){ closeSheets(); return; }
     if(t.closest('#menuBtn')){
-      $('#menuNote').textContent = '点击圆圈标记完成；长按条目或点「整改」标记待整改。状态与备注仅保存在当前浏览器。';
+      $('#menuNote').textContent = CLOUD_ON
+        ? '点击圆圈标记完成；长按条目或点「整改」标记待整改。已开启云同步：加入房间后进度多人共享，未加入时仅保存在当前浏览器。'
+        : '点击圆圈标记完成；长按条目或点「整改」标记待整改。状态与备注仅保存在当前浏览器。';
       openSheet('menuSheet');
       return;
     }
+    if(t.closest('#menuRoom')){ closeSheets(); renderRoomSheet(); openSheet('roomSheet'); return; }
+    if(t.closest('#syncBar')){ renderRoomSheet(); openSheet('roomSheet'); return; }
+    if(t.closest('#closeRoom')){ closeSheets(); return; }
+    if(t.closest('#btnCreateRoom')){
+      if(!CLOUD_ON) return;
+      var newCode = genCode();
+      setSyncUI('warn', '创建房间中…');
+      api('rooms', {method:'POST', headers:{'Prefer':'return=minimal'}, body: JSON.stringify({id: newCode, name: '验房装修'})})
+        .then(function(){ enterRoom(newCode); })
+        .catch(function(e){ setSyncUI('err', errHint(e) + ' · 本地模式继续可用'); toast('创建失败：' + errHint(e)); });
+      return;
+    }
+    if(t.closest('#btnJoinRoom')){
+      if(!CLOUD_ON) return;
+      var code0 = ($('#roomCodeInput').value || '').toUpperCase().trim();
+      if(!/^[A-Z0-9]{6}$/.test(code0)){ toast('请输入 6 位房间码'); return; }
+      setSyncUI('warn', '验证房间码…');
+      api('rooms?id=eq.' + encodeURIComponent(code0) + '&select=id')
+        .then(function(rows){
+          if(rows && rows.length){ enterRoom(code0); }
+          else { setSyncUI('warn', '本地模式 · 点击加入云同步房间'); toast('房间不存在，请核对房间码'); }
+        })
+        .catch(function(e){ setSyncUI('err', errHint(e) + ' · 本地模式继续可用'); toast(errHint(e)); });
+      return;
+    }
+    if(t.closest('#btnSyncNow')){ syncCycle(); toast('正在同步…'); return; }
+    if(t.closest('#btnCopyLink') || t.closest('#roomCodeBig')){
+      if(room) copyText(roomLink(), '邀请链接已复制，发给家人即可加入');
+      return;
+    }
+    if(t.closest('#btnLeaveRoom')){ closeSheets(); leaveRoom(); return; }
     if(t.closest('#closeMenu')){ closeSheets(); return; }
     if(t.closest('#btnCopy')){ copyText(problemsText(), '问题清单已复制'); return; }
     if(t.closest('#btnCsv')){ exportCsv(); return; }
@@ -1034,8 +1142,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       return;
     }
     if(t.closest('#doReset')){
-      localStorage.removeItem(KEY);
-      location.reload();
+      cloudResetAndReload();
       return;
     }
 
@@ -1052,6 +1159,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     n[inp.dataset.f] = inp.value;
     if(!n.loc && !n.qty && !n.due) delete S.notes[id];
     else S.notes[id] = n;
+    markDirty(id);
     notePrint(item);
     saveSoon();
   });
@@ -1059,6 +1167,307 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   window.addEventListener('afterprint', function(){
     document.body.classList.remove('printing-problems');
   });
+
+  document.addEventListener('change', function(e){
+    if(e.target.id === 'roomNick2' && room){
+      room.nick = e.target.value.trim();
+      saveRoom();
+      toast('昵称已保存');
+    }
+  });
+
+  /* ---------- 云同步（Supabase REST，无 SDK） ---------- */
+  var applyingRemote = false;
+  var CLOUD_ON = !!(SUPABASE_URL && SUPABASE_ANON_KEY && /^https:\/\//.test(SUPABASE_URL));
+  var ROOM_KEY = 'xf_room_v1';
+  var META_KEY = 'xf_cloud_meta_v1';
+  var room = null;                 // {code, nick}
+  var meta = {seen:{}};            // seen: item_id -> 服务器 updated_at
+  var dirty = {};                  // 待上传的 item_id
+  var lastSyncAt = 0;
+  var pollTimer = 0, pushTimer = 0, syncing = false;
+
+  function loadRoom(){ try{ room = JSON.parse(localStorage.getItem(ROOM_KEY) || 'null'); }catch(e){ room = null; } }
+  function saveRoom(){ try{ if(room) localStorage.setItem(ROOM_KEY, JSON.stringify(room)); else localStorage.removeItem(ROOM_KEY); }catch(e){} }
+  function loadMeta(){
+    try{ meta = JSON.parse(localStorage.getItem(META_KEY) || 'null') || {seen:{}}; }catch(e){ meta = {seen:{}}; }
+    meta.seen = meta.seen || {}; meta.dirty = meta.dirty || {}; dirty = meta.dirty;
+  }
+  function saveMeta(){ try{ meta.dirty = dirty; localStorage.setItem(META_KEY, JSON.stringify(meta)); }catch(e){} }
+
+  function api(path, opts){
+    opts = opts || {};
+    opts.headers = Object.assign({
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    }, opts.headers || {});
+    return fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/' + path, opts).then(function(r){
+      if(!r.ok) return r.text().then(function(t){ var e = new Error('HTTP ' + r.status); e.detail = t; throw e; });
+      if(r.status === 204) return null;
+      return r.text().then(function(t){ return t ? JSON.parse(t) : null; });
+    });
+  }
+
+  function markDirty(id){
+    if(!CLOUD_ON || !room) return;
+    dirty[id] = true;
+    saveMeta();
+  }
+
+  /* 把底层错误翻译成用户能看懂的原因 */
+  function errHint(e){
+    var m = (e && e.message) || '';
+    if(m === 'Failed to fetch' || m.indexOf('NetworkError') >= 0) return '网络不通，检查网络或代理';
+    if(m.indexOf('404') >= 0) return '云端表不存在，请先在 Supabase SQL Editor 执行建表脚本';
+    if(m.indexOf('401') >= 0 || m.indexOf('403') >= 0) return 'anon key 无效或 RLS 策略未配置，请核对 key 与建表脚本';
+    if(m.indexOf('409') >= 0) return '数据冲突，请点「立即同步」重试';
+    if(m.indexOf('400') >= 0) return '请求被拒绝，请确认建表脚本已完整执行';
+    return '同步出错（' + m + '）';
+  }
+  function syncFail(e){ setSyncUI('err', errHint(e) + ' · 本地模式继续可用'); }
+
+  function setSyncUI(cls, msg){
+    var bar = $('#syncBar');
+    if(!CLOUD_ON){ bar.classList.remove('on'); return; }
+    bar.className = 'on ' + cls;
+    bar.querySelector('.scode').textContent = room ? room.code : '本地模式';
+    bar.querySelector('.smsg').textContent = msg;
+    var rs = $('#roomStat');
+    if(rs && room){
+      rs.innerHTML = '同步状态：' + esc(msg) +
+        (lastSyncAt ? '<br>上次同步：' + new Date(lastSyncAt).toLocaleTimeString('zh-CN', {hour12:false}) : '') +
+        (room.nick ? '<br>昵称：' + esc(room.nick) : '');
+    }
+  }
+
+  function localRow(id){
+    if(id.indexOf('-') > 0) return {status: S.acts[id] ? 'd' : 'n', note: null};
+    if(id.charAt(0) === 's') return {status: S.stages[id] || 'n', note: null};
+    return {status: S.items[id] || 'n', note: S.notes[id] || null};
+  }
+  function applyRemoteRow(row){
+    var id = row.item_id, st = row.status || 'n';
+    if(id.indexOf('-') > 0){
+      if(st === 'd') S.acts[id] = true; else delete S.acts[id];
+    } else if(id.charAt(0) === 's'){
+      if(st === 'n') delete S.stages[id]; else S.stages[id] = st;
+    } else {
+      if(st === 'n') delete S.items[id]; else S.items[id] = st;
+      var n = row.note || {};
+      if(n.loc || n.qty || n.due) S.notes[id] = {loc: n.loc || '', qty: n.qty || '', due: n.due || ''};
+      else delete S.notes[id];
+    }
+  }
+  function refreshAllFromState(){
+    MODS.forEach(function(m){
+      D.modules[m].groups.forEach(function(g){
+        g.items.forEach(function(it){
+          var el = document.getElementById('item-' + it.id);
+          if(!el) return;
+          refreshItem(it.id);
+          var n = S.notes[it.id] || {};
+          $$('.notes input', el).forEach(function(inp){
+            if(document.activeElement !== inp) inp.value = n[inp.dataset.f] || '';
+          });
+        });
+      });
+      applyFilter(m);
+    });
+    updateProgress();
+    updateSchedule();
+    if($('#sheetProblems').classList.contains('on')) renderProblems();
+  }
+
+  function pushSoon(){
+    if(!CLOUD_ON || !room) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushNow, 900);
+  }
+  function pushNow(){
+    if(!CLOUD_ON || !room || syncing) return;
+    var ids = Object.keys(dirty);
+    if(!ids.length) return;
+    if(!navigator.onLine){ setSyncUI('warn', '离线中，改动已缓存，联网后自动同步'); return; }
+    var ts = new Date().toISOString();
+    var rows = ids.map(function(id){
+      var r = localRow(id);
+      return {room_id: room.code, item_id: id, status: r.status, note: r.note || {}, updated_at: ts, updated_by: room.nick || null};
+    });
+    syncing = true;
+    setSyncUI('warn', '同步中…');
+    api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)})
+      .then(function(){
+        ids.forEach(function(id){ delete dirty[id]; meta.seen[id] = ts; });
+        saveMeta();
+        syncing = false;
+        lastSyncAt = Date.now();
+        setSyncUI('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
+      })
+      .catch(function(e){ syncing = false; syncFail(e); });
+  }
+  function pullNow(){
+    if(!CLOUD_ON || !room || syncing) return;
+    if(!navigator.onLine){ setSyncUI('warn', '离线中'); return; }
+    syncing = true;
+    setSyncUI('warn', '同步中…');
+    api('items_state?room_id=eq.' + encodeURIComponent(room.code) + '&select=item_id,status,note,updated_at')
+      .then(function(rows){
+        var changed = false;
+        applyingRemote = true;
+        (rows || []).forEach(function(row){
+          var seen = meta.seen[row.item_id];
+          if(!seen || row.updated_at > seen){
+            applyRemoteRow(row);
+            meta.seen[row.item_id] = row.updated_at;
+            if(dirty[row.item_id]) delete dirty[row.item_id];
+            changed = true;
+          }
+        });
+        applyingRemote = false;
+        save();
+        saveMeta();
+        syncing = false;
+        lastSyncAt = Date.now();
+        if(changed) refreshAllFromState();
+        setSyncUI('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
+      })
+      .catch(function(e){ syncing = false; syncFail(e); });
+  }
+  function syncCycle(){ pushNow(); pullNow(); }
+  function startPolling(){
+    stopPolling();
+    pollTimer = setInterval(function(){
+      if(document.hidden) return;
+      syncCycle();
+    }, 8000);
+  }
+  function stopPolling(){ clearInterval(pollTimer); pollTimer = 0; }
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && CLOUD_ON && room) syncCycle();
+  });
+  window.addEventListener('online', function(){ if(CLOUD_ON && room) syncCycle(); });
+
+  function genCode(){
+    var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '', i;
+    if(window.crypto && crypto.getRandomValues){
+      var rnd = new Uint8Array(6); crypto.getRandomValues(rnd);
+      for(i = 0; i < 6; i++) s += abc[rnd[i] % abc.length];
+    } else {
+      for(i = 0; i < 6; i++) s += abc[Math.floor(Math.random() * abc.length)];
+    }
+    return s;
+  }
+  function roomLink(){ return location.origin + location.pathname + '?room=' + room.code; }
+
+  function renderRoomSheet(){
+    $('#roomJoin').hidden = !!room;
+    $('#roomInfo').hidden = !room;
+    if(room){
+      $('#roomCodeBig').textContent = room.code;
+      $('#roomNick2').value = room.nick || '';
+    }
+  }
+  function enterRoom(code){
+    var nick = (($('#roomNick').value || '') + '').trim() || (($('#roomNick2').value || '') + '').trim();
+    room = {code: code, nick: nick};
+    saveRoom();
+    meta.seen = {};
+    saveMeta();
+    closeSheets();
+    renderRoomSheet();
+    syncing = true;
+    setSyncUI('warn', '正在合并数据…');
+    api('items_state?room_id=eq.' + encodeURIComponent(code) + '&select=item_id,status,note,updated_at')
+      .then(function(rows){
+        applyingRemote = true;
+        (rows || []).forEach(function(row){ applyRemoteRow(row); meta.seen[row.item_id] = row.updated_at; });
+        applyingRemote = false;
+        save();
+        refreshAllFromState();
+        var ts = new Date().toISOString();
+        var up = [], has = {};
+        MODS.forEach(function(m){
+          D.modules[m].groups.forEach(function(g){
+            g.items.forEach(function(it){
+              var st = S.items[it.id], n = S.notes[it.id];
+              if(st || n || dirty[it.id]){
+                has[it.id] = true;
+                up.push({room_id: code, item_id: it.id, status: st || 'n', note: n || {}, updated_at: ts, updated_by: room.nick || null});
+              }
+            });
+          });
+        });
+        Object.keys(S.stages).forEach(function(sid){ has[sid] = true; up.push({room_id: code, item_id: sid, status: S.stages[sid], note: {}, updated_at: ts, updated_by: room.nick || null}); });
+        Object.keys(S.acts).forEach(function(aid){ if(S.acts[aid]){ has[aid] = true; up.push({room_id: code, item_id: aid, status: 'd', note: {}, updated_at: ts, updated_by: room.nick || null}); } });
+        Object.keys(dirty).forEach(function(id){
+          if(has[id]) return;
+          var r = localRow(id);
+          up.push({room_id: code, item_id: id, status: r.status, note: r.note || {}, updated_at: ts, updated_by: room.nick || null});
+        });
+        if(!up.length){
+          syncing = false; lastSyncAt = Date.now(); dirty = {}; saveMeta();
+          setSyncUI('ok', '已同步'); startPolling(); return null;
+        }
+        return api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(up)})
+          .then(function(){
+            up.forEach(function(r){ meta.seen[r.item_id] = ts; });
+            dirty = {}; saveMeta();
+            syncing = false; lastSyncAt = Date.now();
+            setSyncUI('ok', '已同步'); startPolling();
+          });
+      })
+      .catch(function(e){ syncing = false; syncFail(e); startPolling(); });
+    toast('已加入房间 ' + code);
+  }
+  function leaveRoom(){
+    stopPolling();
+    room = null;
+    saveRoom();
+    renderRoomSheet();
+    setSyncUI('warn', '本地模式 · 点击加入云同步房间');
+    toast('已退出房间，数据保留在本机');
+  }
+  function cloudResetAndReload(){
+    if(!CLOUD_ON || !room){ localStorage.removeItem(KEY); location.reload(); return; }
+    var ids = [];
+    MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ ids.push(it.id); }); }); });
+    D.schedule.stages.forEach(function(s){ ids.push(s.id); s.acts.forEach(function(a){ ids.push(a.id); }); });
+    var ts = new Date().toISOString();
+    var rows = ids.map(function(id){ return {room_id: room.code, item_id: id, status: 'n', note: {}, updated_at: ts, updated_by: room.nick || null}; });
+    setSyncUI('warn', '正在清空云端…');
+    api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)})
+      .then(function(){
+        localStorage.removeItem(KEY);
+        meta.seen = {}; dirty = {}; saveMeta();
+        location.reload();
+      })
+      .catch(function(){
+        toast('云端清空失败，请联网后重试');
+        $('#confirmDlg').classList.remove('on');
+        lock(false);
+        setSyncUI('err', '清空失败');
+      });
+  }
+
+  /* 云同步初始化 */
+  if(CLOUD_ON){
+    $('#menuRoom').hidden = false;
+    loadMeta();
+    loadRoom();
+    var urlRoom = '';
+    try{ urlRoom = ((new URLSearchParams(location.search)).get('room') || '').toUpperCase().trim(); }catch(e){}
+    if(room){
+      setSyncUI('warn', '连接中…');
+      syncCycle();
+      startPolling();
+    } else {
+      setSyncUI('warn', '本地模式 · 点击加入云同步房间');
+      if(urlRoom) $('#roomCodeInput').value = urlRoom;
+      renderRoomSheet();
+      openSheet('roomSheet');
+    }
+  }
 
   // 初始化
   $$('.filters button').forEach(function(b){});
