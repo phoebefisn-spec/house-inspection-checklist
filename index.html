@@ -178,14 +178,15 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .act.done .achk{background:var(--green);border-color:var(--green)}
 .act.done .achk svg{opacity:1}
 .amain{flex:1;min-width:0}
-.aname{display:block;font-size:13.5px;font-weight:500}
+.atop{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0}
+.aname{font-size:13.5px;font-weight:500;flex:1 1 auto;min-width:0;overflow-wrap:anywhere;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .act.done .aname{text-decoration:line-through;color:var(--muted);font-weight:400}
 .adesc{display:block;margin-top:2px;font-size:11px;line-height:1.5;color:var(--muted)}
-.adays{flex:0 0 auto;font-size:10.5px;color:var(--muted);margin-top:3px}
-.sstat{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;flex-wrap:wrap}
-.sstat>span{font-size:11.5px;color:var(--muted)}
-.sseg{display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px}
-.sseg button{height:44px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:11.5px;color:var(--muted)}
+.adays{flex:0 0 auto;font-size:10.5px;color:var(--muted);margin-top:2px;background:var(--card2);border-radius:5px;padding:1px 6px;white-space:nowrap}
+.sstat{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.sstat>.sseg{flex:1 1 160px;min-width:0}
+.sseg{display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px;flex-wrap:nowrap}
+.sseg button{flex:1 1 0;min-width:0;white-space:nowrap;height:44px;padding:0 8px;border:0;border-radius:6px;background:transparent;font-size:11.5px;color:var(--muted)}
 .sseg button.on{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.07)}
 
 /* ---------- 底部导航 ---------- */
@@ -237,6 +238,42 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,10px);z-index:70;background:var(--ink);color:var(--inkText);font-size:12.5px;padding:9px 16px;border-radius:9px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:88%;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .print-head{display:none}
+
+/* ---------- 窄屏（≤480px）修复 ---------- */
+@media (max-width:480px){
+  /* 排期动作：标题+天数保持单行横排；desc/备注换行到下面 */
+  .act{padding:9px 9px;gap:8px}
+  .amain{min-width:0}
+  .atop{gap:6px}
+  .aname{font-size:13px}
+  /* 阶段状态分段按钮强制横排不压缩到单字 */
+  .sseg{flex-wrap:nowrap;gap:3px}
+  .sseg button{flex:1 1 0;min-width:52px;font-size:11px;padding:0 4px;white-space:nowrap}
+  .sstat{margin-top:10px}
+  /* 阶段信息：标签+值窄屏堆叠 */
+  .kv{flex-wrap:wrap;gap:3px 6px}
+  .kv>span{flex:1 0 100%;font-size:10.5px}
+  .kv p{flex:1 0 100%;font-size:12px}
+  /* 阶段头部：状态徽章 + 天数 + 名称保持横排 */
+  .srow{gap:5px}
+  .sname{font-size:14px}
+  .days{font-size:10px;padding:0 4px}
+  .badge{font-size:10px;padding:0 4px}
+  /* 头部 topTabs 不溢出 */
+  #topTabs{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  #topTabs::-webkit-scrollbar{display:none}
+  #topTabs button{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:0 8px;height:38px}
+  /* 底部 navbtn 强制等宽、按钮不压缩 */
+  #bottomNav{padding-bottom:calc(52px + env(safe-area-inset-bottom))}
+  .navbtn svg{width:19px;height:19px}
+  .navbtn span{font-size:10.5px}
+  /* 备注 textarea 强制全宽、flex-wrap 不挤 */
+  .notes{min-width:0;overflow:hidden}
+  .notes .nf,.notes label{width:100%;min-width:0}
+  .nf textarea{width:100%;box-sizing:border-box;min-height:64px}
+  /* 费用卡片：金额独占一行 */
+  .costc .camount{font-size:18px}
+}
 
 @media (prefers-reduced-motion: reduce){
   *{transition:none!important;scroll-behavior:auto!important}
@@ -370,6 +407,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <button data-tab="a">装修验收 <i>68</i></button>
       <button data-tab="s">排期 <i>25</i></button>
       <button data-tab="ap">家电 <i id="apCountTop">0</i></button>
+      <button data-tab="cost">费用 <i id="costCountTop">0</i></button>
     </nav>
     <div id="syncBar" role="button" aria-label="云同步设置">
       <span class="dot"></span><span class="scode"></span><span class="smsg"></span>
@@ -777,9 +815,15 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
     return '<div class="act' + (done?' done':'') + (open?' open':'') + '" data-aid="' + a.id + '">' +
       '<button class="achk" type="button" aria-label="切换完成"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg></button>' +
-      '<div class="amain"><span class="aname">' + esc(a.name) + '</span><span class="adesc">' + esc(a.desc) + '</span>' +
-      rmkPreview + rmkEdit + modHtml +
-      '</span><span class="adays">' + esc(a.days) + '天</span></div>';
+      '<div class="amain">' +
+        '<div class="atop">' +
+          '<span class="aname">' + esc(a.name) + '</span>' +
+          '<span class="adays">' + esc(a.days) + '天</span>' +
+        '</div>' +
+        '<span class="adesc">' + esc(a.desc) + '</span>' +
+        rmkPreview + rmkEdit + modHtml +
+      '</div>' +
+    '</div>';
   }
 
   function stageHTML(s){
@@ -1175,6 +1219,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       else if(c.status === 'r') sumRef += amt;
     });
     $('#num-cost').textContent = cnt.all;
+    $('#costCountTop').textContent = cnt.all;
     $$('#costFilters button[data-f]').forEach(function(b){
       b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
