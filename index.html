@@ -128,7 +128,16 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .item.open .istd{color:var(--text)}
 .note-print{display:none}
 .notes{display:none;flex-direction:column;gap:8px;margin-top:9px;padding-top:9px;border-top:1px dashed rgba(127,127,127,.28)}
-.item.fix .notes{display:flex}
+.notes.show{display:flex}
+.nrmk{font-size:12.5px;line-height:1.55;color:var(--text);margin-top:6px;background:var(--card2);border-radius:9px;padding:8px 10px;white-space:pre-wrap;word-break:break-word;max-height:96px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.nrmk.expanded{max-height:none;-webkit-line-clamp:unset}
+.nrmk .toggle{font-size:11px;color:var(--muted);text-decoration:underline;margin-top:4px;display:inline-block}
+.nf textarea{display:block;width:100%;min-height:76px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);padding:8px 10px;font-size:14px;outline:none;resize:vertical;line-height:1.5}
+.nf textarea:focus{border-color:var(--green)}
+.lastmod{margin-top:5px;font-size:11px;color:var(--gray);display:flex;align-items:center;gap:4px}
+.lastmod b{font-weight:600;color:var(--muted)}
+.prmk{margin-top:4px;font-size:12.5px;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.prloc{font-size:11.5px;color:var(--muted);margin-top:2px}
 .nf{display:block;min-width:0}
 .nf>span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
 .nf input{display:block;width:100%;height:44px;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);padding:0 10px;font-size:14px;outline:none}
@@ -164,8 +173,8 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .acts{margin-top:11px;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
 .act{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:11px 10px;border:0;background:var(--card);min-height:48px}
 .act+.act{border-top:1px solid var(--line2)}
-.achk{flex:0 0 20px;height:20px;margin-top:1px;border-radius:5px;border:1.5px solid #c7ccd4;display:grid;place-items:center}
-.achk svg{width:13px;height:13px;stroke:#fff;stroke-width:2.6;fill:none;opacity:0}
+.act .achk{background:none;border:none;padding:0;cursor:pointer;flex:0 0 20px;height:20px;margin-top:1px;border-radius:5px;border:1.5px solid #c7ccd4;display:grid;place-items:center}
+.act .achk svg{width:13px;height:13px;stroke:#fff;stroke-width:2.6;fill:none;opacity:0}
 .act.done .achk{background:var(--green);border-color:var(--green)}
 .act.done .achk svg{opacity:1}
 .amain{flex:1;min-width:0}
@@ -206,6 +215,9 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .prno{font-variant-numeric:tabular-nums}
 .prname{font-size:13.5px;font-weight:500;margin-top:2px;overflow-wrap:anywhere}
 .prnote{margin-top:4px;font-size:11.5px;line-height:1.55;color:var(--muted);overflow-wrap:anywhere}
+.prtag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--muted);margin-right:3px}
+.prnote-full{margin-top:4px;padding:6px 8px;font-size:12px;line-height:1.6;color:var(--text);background:var(--card2);border-radius:6px;border-left:3px solid var(--ink);overflow-wrap:anywhere;white-space:pre-wrap}
+.prmod{margin-top:4px;font-size:11px;color:var(--gray)}
 .prgo{position:absolute;right:0;top:4px;height:44px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--card2);font-size:11px;color:var(--text)}
 .pempty{padding:46px 10px;text-align:center;font-size:13px;line-height:1.8;color:var(--muted)}
 .pempty span{font-size:11.5px;color:var(--gray)}
@@ -383,6 +395,10 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 10h14"/><path d="M8 6.5h2M8 14h2"/></svg>
       <span>家电</span>
     </button>
+    <button class="navbtn" data-tab="cost">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9 10.5c0-1 1.3-1.5 3-1.5s3 .5 3 1.5c0 1-1.3 1.2-3 1.5s-3 .5-3 1.5c0 1 1.3 1.5 3 1.5s3-.5 3-1.5"/></svg>
+      <span>费用</span>
+    </button>
   </nav>
 
   <div class="sheet" id="sheetProblems">
@@ -499,9 +515,64 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
           <button data-v="d" type="button" style="flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2)">已安装</button>
         </div></div>
         <label class="rfield"><span>备注</span><input id="apRmk" type="text" maxlength="60" placeholder="如：需 16A 插座 / 柜体开孔尺寸另算"></label>
+        <div class="rfield"><span>采购与费用（可空，空则不纳入费用台账）</span>
+          <div class="apgrid">
+            <label class="rfield"><span>预估金额 ¥</span><input id="apEstCost" type="text" inputmode="decimal" placeholder="如：5999"></label>
+            <label class="rfield"><span>购入价 ¥</span><input id="apPrice" type="text" inputmode="decimal" placeholder="如：4999"></label>
+          </div>
+          <div class="apgrid">
+            <label class="rfield"><span>购买日期</span><input id="apBuyDate" type="date"></label>
+            <label class="rfield"><span>购买渠道</span><input id="apBuyChannel" type="text" placeholder="如：京东/天猫/门店"></label>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--text)"><input id="apPaid" type="checkbox" style="width:18px;height:18px"> 已付款（价格写入费用台账·家电清单来源，避免重复录入）</label>
+        </div>
         <div class="rbtns" style="margin-bottom:14px">
           <button class="sbtn danger-text" id="apDelete" hidden>删除</button>
           <button class="sbtn pri" id="apSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="costSheet">
+    <div class="sheet-panel">
+      <div class="sh-head">
+        <h2>新增费用记录</h2>
+        <button class="iconbtn" id="closeCost" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <div class="sh-body">
+        <div class="apgrid">
+          <label class="rfield"><span>日期</span><input id="costDate" type="date"></label>
+          <label class="rfield"><span>金额 ¥</span><input id="costAmount" type="text" inputmode="decimal" placeholder="如：4999"></label>
+        </div>
+        <label class="rfield"><span>项目/事由</span><input id="costSubject" type="text" maxlength="30" placeholder="如：水电首期款、瓷砖、空调"></label>
+        <div class="apgrid">
+          <label class="rfield"><span>类别</span><select id="costCat" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+            <option>设计</option><option>拆改</option><option>水电</option><option>防水泥瓦</option><option>木工</option><option>油漆</option><option>主材</option><option>家具</option><option>家电</option><option>软装</option><option>其他</option>
+          </select></label>
+          <label class="rfield"><span>所属阶段</span><select id="costStage" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+            <option value="">（不关联）</option>
+            <option>设计与准备</option><option>报批与开工准备</option><option>拆改</option><option>水电改造</option><option>防水+泥瓦</option><option>木工+油漆</option><option>安装收尾</option><option>软装与入住</option>
+          </select></label>
+        </div>
+        <div class="apgrid">
+          <label class="rfield"><span>付款方式</span><select id="costPayby" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+            <option>现金</option><option>微信</option><option>支付宝</option><option>银行转账</option><option>刷卡</option>
+          </select></label>
+          <label class="rfield"><span>状态</span><select id="costStatus" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+            <option value="p">已付</option><option value="w">待付</option><option value="r">已退</option>
+          </select></label>
+        </div>
+        <label class="rfield"><span>收款方</span><input id="costPayee" type="text" maxlength="20" placeholder="如：XX装修公司 / 王师傅"></label>
+        <label class="rfield"><span>来源</span><select id="costSrc" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+          <option value="m">手工录入</option><option value="a">家电清单</option>
+        </select></label>
+        <label class="rfield"><span>备注</span><textarea id="costRmk" maxlength="80" placeholder="如：票据号、约定退款条款、合同号" style="width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:8px 10px;font-size:14px;resize:vertical"></textarea></label>
+        <div class="rbtns" style="margin-bottom:14px">
+          <button class="sbtn danger-text" id="costDel" hidden>删除</button>
+          <button class="sbtn pri" id="costSave">保存</button>
         </div>
       </div>
     </div>
@@ -556,24 +627,30 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   /* ---------- 状态 ---------- */
   function blank(){
-    return {items:{},notes:{},stages:{},acts:{},apps:{},
-      ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true},appFilter:'all',appSort:false}};
+    return {items:{},notes:{},stages:{},acts:{},apps:{},actNotes:{},stageNotes:{},lastMod:{},costs:{},
+      ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true},appFilter:'all',appSort:false,lastModExpand:{},
+      costFilter:'all',costStatus:'all',costSort:'date-desc'}};
   }
   var S;
   try{ S = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ S = null; }
   var B = blank();
   S = Object.assign({}, B, S || {});
   S.items = S.items || {}; S.notes = S.notes || {}; S.stages = S.stages || {}; S.acts = S.acts || {};
-  S.apps = S.apps || {};
+  S.apps = S.apps || {}; S.actNotes = S.actNotes || {}; S.stageNotes = S.stageNotes || {}; S.lastMod = S.lastMod || {};
+  S.costs = S.costs || {};
   S.ui.appFilter = S.ui.appFilter || 'all';
   S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
+  S.ui.lastModExpand = S.ui.lastModExpand || {};
   S.ui.filters = Object.assign({}, B.ui.filters, S.ui.filters || {});
+  S.ui.costFilter = S.ui.costFilter || 'all';
+  S.ui.costStatus = S.ui.costStatus || 'all';
+  S.ui.costSort = S.ui.costSort || 'date-desc';
   S.ui.collapsed = S.ui.collapsed || {};
   S.ui.openItems = S.ui.openItems || {};
   S.ui.openStages = S.ui.openStages || {};
   if(S.ui.openStages.s1 === undefined) S.ui.openStages.s1 = true;
-  if(MODS.indexOf(S.ui.tab) < 0 && S.ui.tab !== 's' && S.ui.tab !== 'ap') S.ui.tab = 'v';
+  if(MODS.indexOf(S.ui.tab) < 0 && ['s','ap','cost'].indexOf(S.ui.tab) < 0) S.ui.tab = 'v';
 
   var saveTimer = 0;
   function save(){
@@ -586,6 +663,33 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
   function stOf(id){ return S.items[id] || 'n'; }
 
+  /* ---------- 最后修改人/时间 辅助 ---------- */
+  function setLastMod(id, by, at){
+    S.lastMod[id] = {by: by || '', at: at || Date.now()};
+  }
+  function fmtTimeAgo(isoOrMs){
+    var t = (typeof isoOrMs === 'string') ? new Date(isoOrMs).getTime() : isoOrMs;
+    if(!t) return '';
+    var diff = Date.now() - t;
+    if(diff < 60000) return '刚刚';
+    if(diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+    if(diff < 86400000){
+      var d = new Date(t); return d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    }
+    var d = new Date(t);
+    var td = new Date();
+    if(d.toDateString() === td.toDateString()) return d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    return (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  }
+  function modLabel(id, isLocal){
+    var m = S.lastMod[id];
+    if(!m) return '';
+    var who = m.by ? esc(m.by) : '未填昵称';
+    var when = fmtTimeAgo(m.at);
+    if(isLocal && Date.now() - m.at < 2000) who = '你';
+    return who + ' · ' + when;
+  }
+
   /* ---------- 渲染：清单 ---------- */
   function clsOf(st){ return st === 'd' ? 'done' : st === 'r' ? 'fix' : 'none'; }
 
@@ -593,6 +697,17 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var st = stOf(it.id);
     var note = S.notes[it.id] || {};
     var open = !!S.ui.openItems[it.id];
+    var isFix = st === 'r';
+    var rmkText = (note.rmk || '').trim();
+    var rmkHtml = rmkText ? '<div class="nrmk' + (S.ui.lastModExpand['note:'+it.id]?' expanded':'') + '" data-tgt="note:'+it.id+'">' + esc(rmkText).replace(/\n/g,'<br>') + (rmkText.length > 40 ? '<span class="toggle">展开/收起</span>' : '') + '</div>' : '';
+    var locRow = isFix ?
+      '<label class="nf"><span>位置</span><input data-f="loc" type="text" placeholder="如：主卧西墙、窗边" value="' + esc(note.loc||'') + '"></label>' +
+      '<div class="nrow">' +
+        '<label class="nf"><span>数量</span><input data-f="qty" type="text" placeholder="如：3 处" value="' + esc(note.qty||'') + '"></label>' +
+        '<label class="nf"><span>整改期限</span><input data-f="due" type="date" value="' + esc(note.due||'') + '"></label>' +
+      '</div>' : '';
+    var modTxt = modLabel(it.id);
+    var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
     return '<div class="item ' + clsOf(st) + (open?' open':'') + '" id="item-' + it.id + '" data-id="' + it.id + '" data-mod="' + m + '" data-st="' + st + '">' +
       '<button class="chk" type="button" aria-label="切换完成状态"><span class="circ">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg><b>!</b>' +
@@ -605,13 +720,12 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         '<p class="istd">' + esc(it.s) + '</p>' +
         '<div class="iextra"><span>工具 · ' + esc(it.w || '无') + '</span>' +
           '<button class="more" type="button">' + (open?'收起标准':'展开标准') + '</button></div>' +
-        '<div class="notes">' +
-          '<label class="nf"><span>位置</span><input data-f="loc" type="text" placeholder="如：主卧西墙、窗边" value="' + esc(note.loc||'') + '"></label>' +
-          '<div class="nrow">' +
-            '<label class="nf"><span>数量</span><input data-f="qty" type="text" placeholder="如：3 处" value="' + esc(note.qty||'') + '"></label>' +
-            '<label class="nf"><span>整改期限</span><input data-f="due" type="date" value="' + esc(note.due||'') + '"></label>' +
-          '</div>' +
+        rmkHtml +
+        '<div class="notes show">' +
+          locRow +
+          '<label class="nf"><span>备注' + (isFix ? '' : '（所有状态可写）') + '</span><textarea data-f="rmk" placeholder="如：2024/5/8 已重新打胶，一周后复查…">' + esc(note.rmk||'') + '</textarea></label>' +
         '</div>' +
+        modHtml +
         '<div class="note-print"></div>' +
       '</div>' +
     '</div>';
@@ -655,16 +769,27 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   function actHTML(a){
     var done = !!S.acts[a.id];
-    return '<button class="act' + (done?' done':'') + '" type="button" data-aid="' + a.id + '">' +
-      '<span class="achk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg></span>' +
-      '<span class="amain"><span class="aname">' + esc(a.name) + '</span><span class="adesc">' + esc(a.desc) + '</span></span>' +
-      '<span class="adays">' + esc(a.days) + '天</span>' +
-    '</button>';
+    var rmk = (S.actNotes[a.id] || '').trim();
+    var open = !!S.ui.openStages['a:'+a.id];
+    var rmkPreview = rmk ? '<div class="nrmk' + (rmk.length > 60 ? (open?' expanded':'') : '') + '" data-tgt="act:'+a.id+'">' + esc(rmk).replace(/\n/g,'<br>') + '</div>' : '';
+    var rmkEdit = open ? '<div class="notes show"><label class="nf"><span>备注</span><textarea data-f="rmk" data-tgt-aid="' + a.id + '" placeholder="如：已联系木工，本周五进场…">' + esc(rmk) + '</textarea></label></div>' : '';
+    var modTxt = modLabel(a.id);
+    var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    return '<div class="act' + (done?' done':'') + (open?' open':'') + '" data-aid="' + a.id + '">' +
+      '<button class="achk" type="button" aria-label="切换完成"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg></button>' +
+      '<div class="amain"><span class="aname">' + esc(a.name) + '</span><span class="adesc">' + esc(a.desc) + '</span>' +
+      rmkPreview + rmkEdit + modHtml +
+      '</span><span class="adays">' + esc(a.days) + '天</span></div>';
   }
 
   function stageHTML(s){
     var open = !!S.ui.openStages[s.id];
     var st = S.stages[s.id] || 'n';
+    var rmk = (S.stageNotes[s.id] || '').trim();
+    var rmkHtml = rmk ? '<div class="nrmk">' + esc(rmk).replace(/\n/g,'<br>') + '</div>' : '';
+    var modTxt = modLabel(s.id);
+    var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    var rmkEdit = '<label class="nf"><span>阶段备注</span><textarea data-tgt-sid="' + s.id + '" placeholder="如：找厂家上门测量、材料清单汇总…">' + esc(rmk) + '</textarea></label>';
     return '<div class="stage' + (open?' open':'') + '" id="stage-' + s.id + '" data-sid="' + s.id + '">' +
       '<button class="shead" type="button">' +
         '<span class="sno">' + esc(s.no) + '</span>' +
@@ -673,6 +798,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
             '<span class="days">' + esc(s.days) + '天</span>' +
             '<span class="badge ' + st + '">' + badgeText(st) + '</span></span>' +
           '<span class="sdesc">' + esc(s.desc) + '</span>' +
+          rmkHtml +
         '</span>' +
         '<span class="sright"><span class="scount">0/' + s.acts.length + '</span><span class="schev">▾</span></span>' +
       '</button>' +
@@ -686,6 +812,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         '<div class="sstat"><span>阶段状态</span><div class="sseg" data-sid="' + s.id + '">' +
           '<button data-v="n">未开始</button><button data-v="p">进行中</button><button data-v="d">已完成</button>' +
         '</div></div>' +
+        '<div class="notes show">' + rmkEdit + '</div>' +
+        modHtml +
       '</div>' +
     '</div>';
   }
@@ -705,7 +833,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     '</section>';
   }
 
-  $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView() + applianceView();
+  $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView() + applianceView() + costView();
 
   /* ---------- 进度 ---------- */
   function groupStats(mod){
@@ -808,6 +936,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   function setStatus(id, st){
     if(st === 'n') delete S.items[id]; else S.items[id] = st;
+    setLastMod(id, room ? room.nick || '' : '', Date.now());
     markDirty(id);
     var info = ITEM_MAP[id];
     save();
@@ -891,37 +1020,76 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   function toggleAct(id, card){
     if(S.acts[id]) delete S.acts[id]; else S.acts[id] = true;
+    setLastMod(id, room ? room.nick || '' : '', Date.now());
     markDirty(id);
     var s = D.schedule.stages.filter(function(x){ return x.id === card.dataset.sid; })[0];
     var d = s.acts.filter(function(a){ return S.acts[a.id]; }).length;
     if(d === s.acts.length) S.stages[s.id] = 'd';
     else if(d > 0) S.stages[s.id] = 'p';
     else if(S.stages[s.id] === 'd' || S.stages[s.id] === 'p') S.stages[s.id] = 'n';
+    setLastMod(s.id, room ? room.nick || '' : '', Date.now());
     markDirty(s.id);
     save();
     updateSchedule();
   }
 
   /* ---------- 家电清单 ---------- */
-  var APP_PRESETS = [
-    {n:'冰箱', hint:'参考尺寸区间：宽 600–910 · 深 600–750 · 高 1700–2000 mm（单门小冰箱更小，对开门更大，以具体型号为准）'},
-    {n:'洗衣机', hint:'参考尺寸区间：宽 595–600 · 深 550–650 · 高 850 mm（滚筒主流值）'},
-    {n:'烘干机', hint:'参考尺寸区间：宽 595–600 · 深 600–650 · 高 850 mm；叠放需加连接件高度约 30–50 mm'},
-    {n:'洗碗机', hint:'参考尺寸区间：嵌入式 宽 598 · 深 550–600 · 高 775–815 mm；独立式宽约 600 mm'},
-    {n:'油烟机', hint:'参考尺寸区间：宽 750–900 · 深 500–550 mm（侧吸/顶吸差异大，以型号为准）'},
-    {n:'燃气灶', hint:'参考开孔尺寸：宽 650–710 · 深 350–400 mm（常见双眼灶，开孔尺寸以说明书为准）'},
-    {n:'嵌入式烤箱', hint:'参考尺寸区间：宽 595 · 深 550–570 · 高 595 mm（60cm 标准柜）'},
-    {n:'微波炉', hint:'参考尺寸区间：宽 480–550 · 深 300–400 · 高 280–330 mm'},
-    {n:'电视', hint:'参考整机宽度：55 寸约 1230 · 65 寸约 1450 · 75 寸约 1670 mm；挂墙需确认墙体承重'},
-    {n:'空调室内机', hint:'参考尺寸区间：挂机 宽 800–1100 · 深 200–330 · 高 290–360 mm（1–1.5 匹）'},
-    {n:'空调室外机', hint:'参考尺寸区间：宽 800–950 · 深 300–400 · 高 550–750 mm；需预留散热与检修空间'},
-    {n:'热水器', hint:'参考：燃气式 宽 340–370 · 高 530–600 mm；电储水式直径 400–500 mm（圆桶，按容量变化大）'},
-    {n:'新风主机', hint:'参考尺寸区间：宽 900–1200 · 深 600–800 · 高 220–280 mm（吊顶式，另需检修口）'},
-    {n:'投影', hint:'参考尺寸区间：宽 300–400 · 深 250–350 · 高 100–180 mm；注意投射距离与电源点位'},
-    {n:'洗衣机柜', hint:'参考尺寸区间：宽 600–700 · 深 600–650 · 高 900–950 mm（含台盆另计）'}
+  var APP_PRESET_GROUPS = [
+    {g:'厨房', items:[
+      {n:'冰箱', hint:'参考尺寸：宽 600–910 · 深 600–750 · 高 1700–2000 mm（单门小冰箱更小，对开门更大，以实际型号为准）', pts:['插座']},
+      {n:'制冰机', hint:'尺寸随型号差异很大（台面上至高柜内），以实际到货为准；需预留进水、排水和插座', pts:['插座','进水','排水']},
+      {n:'咖啡机', hint:'台面上常见尺寸：宽约 280–350 · 深约 350–400 mm（意式/全自动差异大）；如需接进水请提前规划', pts:['插座']},
+      {n:'空气炸锅', hint:'台面上尺寸随容量变化，建议预留宽 350+ · 深 350+ mm', pts:['插座']},
+      {n:'电饭煲', hint:'台面小家电，建议预留宽 300 · 深 300 mm 以上', pts:['插座']},
+      {n:'破壁机/豆浆机', hint:'台面小家电，建议预留宽 250 · 深 300 mm 以上', pts:['插座']},
+      {n:'净水器', hint:'厨下安装：超滤/RO 机宽约 150–250 · 深约 150–400 mm（需提前确认柜体高度）；台面款另计', pts:['插座','进水']},
+      {n:'垃圾处理器', hint:'厨下安装，直径约 115 mm，高约 350 mm；需预留电源插座（建议带开关）', pts:['插座','进水','排水']},
+      {n:'蒸烤一体机', hint:'嵌入式参考：宽 595 · 深 550–570 · 高 450 mm（45cm 高柜，接独立电路 16A）', pts:['插座']},
+      {n:'油烟机', hint:'参考尺寸：宽 750–900 · 深 500–550 mm（侧吸/顶吸差异大，以型号为准）', pts:['插座']},
+      {n:'燃气灶', hint:'参考开孔尺寸：宽 650–710 · 深 350–400 mm（常见双眼灶，开孔尺寸以说明书为准）', pts:['燃气']},
+      {n:'洗碗机', hint:'参考：嵌入式 宽 598 · 深 550–600 · 高 775–815 mm；独立式宽约 600 mm；需 16A 插座+进水+排水', pts:['插座','进水','排水']},
+      {n:'嵌入式烤箱', hint:'参考：宽 595 · 深 550–570 · 高 595 mm（60cm 标准柜，建议 16A 独立电路）', pts:['插座']},
+      {n:'微波炉', hint:'参考尺寸：宽 480–550 · 深 300–400 · 高 280–330 mm', pts:['插座']},
+    ]},
+    {g:'生活', items:[
+      {n:'电视', hint:'参考整机宽度：55 寸约 1230 · 65 寸约 1450 · 75 寸约 1670 mm；挂墙需确认墙体承重', pts:['插座','网口']},
+      {n:'空调室内机', hint:'参考：挂机 宽 800–1100 · 深 200–330 · 高 290–360 mm（1–1.5 匹）', pts:['插座']},
+      {n:'空气净化器', hint:'台面上尺寸差异大，建议预留宽 300–450 · 深 300–400 mm', pts:['插座']},
+      {n:'加湿器', hint:'台面/地面，尺寸随水箱容量变化，以实际为准', pts:['插座']},
+      {n:'除湿机', hint:'地面放置，建议预留宽 350 · 深 250 mm 以上；排水管需接下水', pts:['插座','排水']},
+      {n:'熨烫机/挂烫机', hint:'高度随伸缩杆变化，建议预留高度 1.2 m 以上的挂衣空间', pts:['插座']},
+      {n:'电动晾衣架', hint:'吊顶/阳台顶安装，机身宽约 800–1200 · 深约 100 mm；需吊顶内预留插座', pts:['插座']},
+      {n:'投影', hint:'参考尺寸：宽 300–400 · 深 250–350 · 高 100–180 mm；注意投射距离与电源点位', pts:['插座','网口']},
+    ]},
+    {g:'卫浴', items:[
+      {n:'智能马桶/马桶盖', hint:'马桶盖尺寸基本通用（约宽 400 · 深 500 mm）；需马桶旁预留防水插座', pts:['插座']},
+      {n:'电热毛巾架', hint:'参考尺寸：宽 400–600 · 高 600–800 mm；需预埋线或明装插座', pts:['插座']},
+      {n:'浴霸', hint:'吊顶安装，开孔约 300 × 300 mm 或 300 × 600 mm；需 2.5mm² 专线', pts:['插座']},
+      {n:'热水器', hint:'参考：燃气式 宽 340–370 · 高 530–600 mm；电储水式直径 400–500 mm（圆桶，按容量变化大）', pts:['插座','进水','排水','燃气']},
+    ]},
+    {g:'清洁', items:[
+      {n:'洗衣机', hint:'滚筒参考：宽 595–600 · 深 550–650 · 高 850 mm；需 10A 插座+进水+排水', pts:['插座','进水','排水']},
+      {n:'烘干机', hint:'参考：宽 595–600 · 深 600–650 · 高 850 mm；叠放需加连接件约 30–50 mm；需 16A 插座+进水+排水（冷凝水）', pts:['插座','进水','排水']},
+      {n:'洗地机', hint:'手持充电式，充电座预留插座位置 150×150 mm 以上', pts:['插座']},
+      {n:'扫地机器人基站', hint:'参考宽约 350–450 · 深约 350–450 mm（自动集尘/自清洁基站更大）；预留插座和靠墙空间', pts:['插座','进水','排水']},
+      {n:'新风主机', hint:'吊顶式参考：宽 900–1200 · 深 600–800 · 高 220–280 mm；另需预留检修口（约 400×400 mm）', pts:['插座','网口']},
+    ]},
+    {g:'其他', items:[
+      {n:'洗衣机柜', hint:'参考：宽 600–700 · 深 600–650 · 高 900–950 mm（含台盆另计）', pts:[]},
+      {n:'空调室外机', hint:'参考：宽 800–950 · 深 300–400 · 高 550–750 mm；需预留散热与检修空间（侧面≥300、前方≥1000 mm）', pts:[]},
+      {n:'智能镜/镜柜', hint:'尺寸定制为主，深度建议不超过 150 mm；需预留镜前灯电源线', pts:['插座']},
+    ]}
   ];
+  // 展平成 APP_PRESETS 以兼容旧索引访问
+  var APP_PRESETS = [];
+  APP_PRESET_GROUPS.forEach(function(g){ g.items.forEach(function(it){ APP_PRESETS.push({g:g.g, n:it.n, hint:it.hint, pts:it.pts||[]}); }); });
   var APP_POINTS = ['插座','进水','排水','燃气','网口'];
   var APP_ST = {t:'待定', p:'已定', d:'已安装'};
+  var COST_CATS = ['设计','拆改','水电','防水泥瓦','木工','油漆','主材','家具','家电','软装','其他'];
+  var COST_PAYS = ['现金','微信','支付宝','银行转账','刷卡'];
+  var COST_STS = {p:'已付', w:'待付', r:'已退'};
+  var COST_SRC = {m:'手工录入', a:'家电清单'};
+  var SAVE_STAGES = D.schedule.stages.map(function(s){ return s.name; });
   var editingUid = null, apSt = 't', apPts = [];
 
   function applianceView(){
@@ -947,9 +1115,93 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     '</section>';
   }
 
+  /* ---------- 费用台账 ---------- */
+  function fmtMoney(n){
+    var v = Number(n) || 0;
+    return '¥' + v.toFixed(2);
+  }
+  function costView(){
+    return '<section class="view' + (S.ui.tab==='cost'?' on':'') + '" data-tab="cost">' +
+      '<div class="print-head"><h2>费用台账</h2><p>日期 · 项目 · 类别 · 金额 · 付款方式</p></div>' +
+      '<div class="mcard">' +
+        '<div class="mhead"><div><h2>费用台账</h2><p class="msub">记录装修每一笔开支，支持导出 CSV 与预算对比</p></div>' +
+          '<div class="mnum"><b id="num-cost">0</b>笔</div></div>' +
+        '<div class="mstats" id="stats-cost"></div>' +
+        '<div class="filters" id="costFilters">' +
+          '<button data-f="all" class="on">全部 <i>0</i></button>' +
+          '<button data-f="p">已付 <i>0</i></button>' +
+          '<button data-f="w">待付 <i>0</i></button>' +
+          '<button data-f="r">已退 <i>0</i></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="appbar">' +
+        '<button class="sbtn pri" id="costAdd">＋ 新增记录</button>' +
+        '<button class="sbtn" id="costCsv">导出 CSV</button>' +
+      '</div>' +
+      '<div id="costList"></div>' +
+    '</section>';
+  }
+
+  function costCardHTML(cid, c){
+    var catPill = '<span style="font-size:11px;padding:2px 7px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--muted)">' + esc(c.cat || '-') + '</span>';
+    var sts = COST_STS[c.status] || '已付';
+    var stsCls = c.status === 'w' ? 'w' : c.status === 'r' ? 'r' : '';
+    var srcHtml = c.src === 'a' ? '<span style="font-size:11px;color:var(--muted)">来自家电清单</span>' : '';
+    var modTxt = modLabel('cost:' + cid);
+    var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    var rows = [
+      '<div class="cdate">' + esc(c.date || '-') + '</div>',
+      '<div class="csubj">' + catPill + ' ' + esc(c.subject || '(未填项目)') + srcHtml + '</div>',
+      '<div class="camount">' + fmtMoney(c.amount) + ' <span class="csts ' + stsCls + '">' + sts + '</span></div>',
+      '<div class="cmeta">' + esc(c.stage || '') + (c.stage && c.payee ? ' · ' : '') + esc(c.payee || '') + (c.payby ? ' · ' + esc(c.payby) : '') + '</div>' +
+        (c.rmk ? '<div class="crmk">' + esc(c.rmk).replace(/\n/g,'<br>') + '</div>' : ''),
+      modHtml
+    ].join('');
+    return '<div class="costc" data-cid="' + cid + '" role="button">' + rows + '</div>';
+  }
+
+  function renderCosts(){
+    var cids = Object.keys(S.costs);
+    var cnt = {all:cids.length, p:0, w:0, r:0};
+    var sumPaid = 0, sumWait = 0, sumRef = 0, sumMonth = 0;
+    var nowMon = new Date().toISOString().slice(0,7);
+    var byCat = {};
+    cids.forEach(function(id){
+      var c = S.costs[id];
+      cnt[c.status] = (cnt[c.status]||0) + 1;
+      var amt = Number(c.amount) || 0;
+      if(c.status === 'p'){ sumPaid += amt; byCat[c.cat] = (byCat[c.cat]||0) + amt; if((c.date||'').slice(0,7) === nowMon) sumMonth += amt; }
+      else if(c.status === 'w') sumWait += amt;
+      else if(c.status === 'r') sumRef += amt;
+    });
+    $('#num-cost').textContent = cnt.all;
+    $$('#costFilters button[data-f]').forEach(function(b){
+      b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
+      b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
+    });
+    // 汇总文字
+    var catHtml = Object.keys(byCat).map(function(k){ return esc(k) + ' ' + fmtMoney(byCat[k]); }).join('，');
+    if(!catHtml) catHtml = '（暂无数据）';
+    $('#stats-cost').innerHTML =
+      '已付 <b>' + fmtMoney(sumPaid) + '</b> · 待付 <b>' + fmtMoney(sumWait) + '</b> · 已退 <b>' + fmtMoney(sumRef) + '</b><br>' +
+      '本月已付 ' + fmtMoney(sumMonth) + '<br>' +
+      '按类别：' + catHtml;
+    var f = S.ui.costStatus || 'all';
+    var list = cids.filter(function(id){ return f === 'all' || S.costs[id].status === f; });
+    if(S.ui.costSort === 'amount-desc') list.sort(function(a,b){ return (Number(S.costs[b].amount)||0) - (Number(S.costs[a].amount)||0); });
+    else if(S.ui.costSort === 'amount-asc') list.sort(function(a,b){ return (Number(S.costs[a].amount)||0) - (Number(S.costs[b].amount)||0); });
+    else if(S.ui.costSort === 'date-desc') list.sort(function(a,b){ return (S.costs[b].date||'').localeCompare(S.costs[a].date||''); });
+    else list.sort(function(a,b){ return (S.costs[a].date||'').localeCompare(S.costs[b].date||''); });
+    $('#costList').innerHTML = list.length
+      ? list.map(function(id){ return costCardHTML(id, S.costs[id]); }).join('')
+      : '<div class="apempty">还没有记录<br>点上方「＋ 新增记录」开始</div>';
+  }
+
+  /* ---------- 家电扩价格字段辅助 ---------- */
   function appNote(a){
     return {name:a.name, brand:a.brand||'', model:a.model||'', w:a.w||'', dep:a.dep||'', h:a.h||'',
-      qty:a.qty||1, loc:a.loc||'', points:a.points||[], rmk:a.rmk||''};
+      qty:a.qty||1, loc:a.loc||'', points:a.points||[], rmk:a.rmk||'',
+      price: a.price || '', buyDate: a.buyDate || '', buyChannel: a.buyChannel || '', paid: !!a.paid, estCost: a.estCost || ''};
   }
   function appCardHTML(uid, a){
     var dims = (a.w||a.dep||a.h) ? (a.w||'?') + ' × ' + (a.dep||'?') + ' × ' + (a.h||'?') + ' mm' : '';
@@ -957,6 +1209,11 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(a.brand || a.model) meta.push(esc((a.brand||'') + (a.brand&&a.model?' · ':'') + (a.model||'')));
     meta.push('×' + (a.qty||1));
     if(a.loc) meta.push(esc(a.loc));
+    if(a.price) meta.push('¥' + Number(a.price).toFixed(2) + (a.paid ? ' 已付' : (a.estCost ? ' 未付' : '')));
+    else if(a.estCost) meta.push('预估 ¥' + Number(a.estCost).toFixed(2));
+    var mid = 'app:' + uid;
+    var modTxt = modLabel(mid);
+    var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
     return '<div class="appc" data-uid="' + uid + '" role="button">' +
       '<div class="arow1"><span class="aname">' + esc(a.name) + '</span>' +
         '<span class="badge ' + a.st + '">' + APP_ST[a.st] + '</span></div>' +
@@ -964,15 +1221,23 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '<div class="ameta">' + meta.join('　·　') + '</div>' +
       (a.points && a.points.length ? '<div class="ptags">' + a.points.map(function(p){ return '<i>' + esc(p) + '</i>'; }).join('') + '</div>' : '') +
       (a.rmk ? '<div class="armk">' + esc(a.rmk) + '</div>' : '') +
+      modHtml +
     '</div>';
   }
   function renderApps(){
     var uids = Object.keys(S.apps);
     var cnt = {all:uids.length, t:0, p:0, d:0};
-    uids.forEach(function(u){ var st = S.apps[u].st; if(cnt[st] !== undefined) cnt[st]++; });
+    var sumPaid = 0, sumEst = 0;
+    uids.forEach(function(u){
+      var a = S.apps[u];
+      cnt[a.st] = (cnt[a.st]||0) + 1;
+      if(a.price && a.paid) sumPaid += Number(a.price) * (a.qty||1);
+      if(!a.paid && a.estCost) sumEst += Number(a.estCost) * (a.qty||1);
+    });
     $('#num-ap').textContent = cnt.all;
     $('#apCountTop').textContent = cnt.all;
-    $('#stats-ap').innerHTML = '待定 <b>' + cnt.t + '</b> · 已定 <b>' + cnt.p + '</b> · 已安装 <b>' + cnt.d + '</b>';
+    var moneyHtml = '已付 ¥' + sumPaid.toFixed(2) + ' · 待购预估 ¥' + sumEst.toFixed(2);
+    $('#stats-ap').innerHTML = '待定 <b>' + cnt.t + '</b> · 已定 <b>' + cnt.p + '</b> · 已安装 <b>' + cnt.d + '</b><br><span style="color:var(--text);font-weight:500">' + moneyHtml + '</span>';
     $$('#apFilters button[data-f]').forEach(function(b){
       b.querySelector('i').textContent = cnt[b.dataset.f];
       b.classList.toggle('on', S.ui.appFilter === b.dataset.f);
@@ -994,8 +1259,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
 
   function initAppEditor(){
-    $('#apName').innerHTML = APP_PRESETS.map(function(p,i){ return '<option value="' + i + '">' + esc(p.n) + '</option>'; }).join('') +
-      '<option value="-1">自定义…</option>';
+    var opts = '';
+    APP_PRESET_GROUPS.forEach(function(g,gi){
+      opts += '<optgroup label="' + esc(g.g) + '">';
+      g.items.forEach(function(it){
+        var idx = APP_PRESETS.findIndex(function(p){ return p.n === it.n && p.g === g.g; });
+        if(idx >= 0) opts += '<option value="' + idx + '">' + esc(it.n) + '</option>';
+      });
+      opts += '</optgroup>';
+    });
+    $('#apName').innerHTML = opts + '<option value="-1">自定义…</option>';
     $('#apPoints').innerHTML = APP_POINTS.map(function(p){ return '<button type="button" data-p="' + p + '">' + p + '</button>'; }).join('');
   }
   function updateApHint(){
@@ -1005,7 +1278,14 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     else {
       $('#apCustomWrap').hidden = true;
       hint.hidden = false;
-      hint.textContent = APP_PRESETS[+v].hint;
+      var p = APP_PRESETS[+v];
+      var grp = p.g ? '· ' + p.g + '分组' : '';
+      var ptsTxt = (p.pts && p.pts.length) ? '\n常见点位：' + p.pts.join(' / ') + '（已自动勾选，可按需增删）' : '';
+      hint.textContent = grp + ' ' + p.hint + ptsTxt;
+      // 自动勾选预设点位
+      apPts = [];
+      (p.pts || []).forEach(function(pt){ if(APP_POINTS.indexOf(pt) >= 0 && apPts.indexOf(pt) < 0) apPts.push(pt); });
+      $$('#apPoints button').forEach(function(b){ b.classList.toggle('on', apPts.indexOf(b.dataset.p) >= 0); });
     }
   }
   function setApSt(v){
@@ -1038,6 +1318,11 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     $('#apQty').value = a ? (a.qty||1) : 1;
     $('#apLoc').value = a ? (a.loc||'') : '';
     $('#apRmk').value = a ? (a.rmk||'') : '';
+    $('#apPrice').value = a ? (a.price||'') : '';
+    $('#apEstCost').value = a ? (a.estCost||'') : '';
+    $('#apBuyDate').value = a ? (a.buyDate||'') : '';
+    $('#apBuyChannel').value = a ? (a.buyChannel||'') : '';
+    $('#apPaid').checked = !!(a && a.paid);
     apPts = a ? (a.points||[]).slice() : [];
     $$('#apPoints button').forEach(function(b){ b.classList.toggle('on', apPts.indexOf(b.dataset.p) >= 0); });
     setApSt(a ? a.st : 't');
@@ -1060,9 +1345,15 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       points: apPts.slice(),
       rmk: $('#apRmk').value.trim(),
       st: apSt,
-      ts: old ? old.ts : Date.now()
+      ts: old ? old.ts : Date.now(),
+      price: $('#apPrice').value.trim(),
+      buyDate: $('#apBuyDate').value.trim(),
+      buyChannel: $('#apBuyChannel').value.trim(),
+      paid: !!$('#apPaid').checked,
+      estCost: $('#apEstCost').value.trim()
     };
     markDirty('app:' + uid);
+    setLastMod('app:' + uid, room ? room.nick || '' : '', Date.now());
     save();
     closeSheets();
     renderApps();
@@ -1093,11 +1384,12 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   function exportAppsCsv(){
     var uids = Object.keys(S.apps);
     if(!uids.length){ toast('暂无家电记录'); return; }
-    var rows = [['电器','品牌','型号','宽mm','深mm','高mm','数量','位置','点位','状态','备注']];
+    var rows = [['电器','品牌','型号','宽mm','深mm','高mm','数量','位置','点位','状态','购入价','购买日期','购买渠道','已付款','备注']];
     uids.forEach(function(u){
       var a = S.apps[u];
       rows.push([a.name, a.brand||'', a.model||'', a.w||'', a.dep||'', a.h||'', a.qty||1,
-        a.loc||'', (a.points||[]).join('/'), APP_ST[a.st]||'', a.rmk||'']);
+        a.loc||'', (a.points||[]).join('/'), APP_ST[a.st]||'',
+        a.price||'', a.buyDate||'', a.buyChannel||'', a.paid?'是':'否', a.rmk||'']);
     });
     var csv = '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
     var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
@@ -1111,6 +1403,80 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     toast('已导出 CSV');
   }
 
+  /* ---------- 费用台账 操作 ---------- */
+  var editingCostId = null;
+  function openCostEditor(cid){
+    editingCostId = cid || null;
+    $('#costDate').value = cid ? (S.costs[cid].date || new Date().toISOString().slice(0,10)) : new Date().toISOString().slice(0,10);
+    $('#costSubject').value = cid ? S.costs[cid].subject || '' : '';
+    $('#costCat').value = cid ? S.costs[cid].cat || COST_CATS[0] : COST_CATS[0];
+    $('#costStage').value = cid ? S.costs[cid].stage || '' : '';
+    $('#costAmount').value = cid ? S.costs[cid].amount || '' : '';
+    $('#costPayby').value = cid ? S.costs[cid].payby || COST_PAYS[0] : COST_PAYS[0];
+    $('#costPayee').value = cid ? S.costs[cid].payee || '' : '';
+    $('#costStatus').value = cid ? S.costs[cid].status || 'p' : 'p';
+    $('#costSrc').value = cid ? S.costs[cid].src || 'm' : 'm';
+    $('#costRmk').value = cid ? S.costs[cid].rmk || '' : '';
+    $('#costDel').hidden = !cid;
+    openSheet('costSheet');
+  }
+  function saveCost(){
+    var subject = $('#costSubject').value.trim();
+    var amount = Number($('#costAmount').value);
+    if(!subject){ toast('请填写项目/事由'); return; }
+    if(!amount || amount <= 0){ toast('请填写金额（大于 0）'); return; }
+    var cid = editingCostId || ('c' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36));
+    S.costs[cid] = {
+      date: $('#costDate').value || new Date().toISOString().slice(0,10),
+      subject: subject,
+      cat: $('#costCat').value,
+      stage: $('#costStage').value,
+      amount: amount,
+      payby: $('#costPayby').value,
+      payee: $('#costPayee').value.trim(),
+      status: $('#costStatus').value,
+      rmk: $('#costRmk').value.trim(),
+      src: $('#costSrc').value
+    };
+    markDirty('cost:' + cid);
+    setLastMod('cost:' + cid, room ? room.nick || '' : '', Date.now());
+    save();
+    closeSheets();
+    renderCosts();
+    toast(editingCostId ? '已保存修改' : '已添加记录');
+  }
+  function askDeleteCost(){
+    if(!editingCostId) return;
+    showConfirm('删除这条费用记录？', '删除后无法恢复。', '确认删除', function(){
+      delete S.costs[editingCostId];
+      markDirty('cost:' + editingCostId);
+      save();
+      closeSheets();
+      renderCosts();
+      toast('已删除');
+    });
+  }
+  function exportCostsCsv(){
+    var ids = Object.keys(S.costs);
+    if(!ids.length){ toast('暂无费用记录'); return; }
+    var rows = [['日期','项目','类别','阶段','金额(元)','付款方式','收款方','状态','来源','备注','修改人']];
+    ids.forEach(function(id){
+      var c = S.costs[id];
+      var mod = S.lastMod['cost:'+id];
+      rows.push([c.date, c.subject, c.cat, c.stage, c.amount, c.payby, c.payee, COST_STS[c.status]||'已付', COST_SRC[c.src]||'手工录入', c.rmk||'', mod ? (mod.by||'未填昵称') + ' ' + fmtTimeAgo(mod.at) : '']);
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '装修费用台账_' + todayStr().replace(/\./g,'') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
+    toast('已导出 CSV');
+  }
+
   /* ---------- Tab ---------- */
   function switchTab(t){
     S.ui.tab = t;
@@ -1118,6 +1484,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     $$('.view').forEach(function(v){ v.classList.toggle('on', v.dataset.tab === t); });
     $$('#topTabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     $$('.navbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
+    if(t === 'cost') renderCosts();
     window.scrollTo(0,0);
   }
 
@@ -1130,7 +1497,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
           if(stOf(it.id) === 'r'){
             var n = S.notes[it.id] || {};
             out.push({m:m, module:D.modules[m].title, g:g.title, idx:it.idx, t:it.t, id:it.id,
-              loc:n.loc||'', qty:n.qty||'', due:n.due||''});
+              loc:n.loc||'', qty:n.qty||'', due:n.due||'', rmk:n.rmk||''});
           }
         });
       });
@@ -1143,7 +1510,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(p.loc) parts.push('位置：' + p.loc);
     if(p.qty) parts.push('数量：' + p.qty);
     if(p.due) parts.push('期限：' + p.due);
-    return parts.join('　') || '备注未填写';
+    var base = parts.join('　');
+    var fullNote = base ? base + (p.rmk ? '　|　备注：' + p.rmk : '') : (p.rmk ? '备注：' + p.rmk : '备注未填写');
+    return fullNote;
   }
 
   function renderProblems(){
@@ -1166,10 +1535,19 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         if(!gs.length) return;
         html += '<div class="pgsub">' + esc(g.title) + '</div>';
         gs.forEach(function(p){
+          var n = S.notes[p.id] || {};
+          var mod = S.lastMod[p.id];
+          var parts = [];
+          if(n.loc) parts.push('<span class="prtag">📍' + esc(n.loc) + '</span>');
+          if(n.qty) parts.push('<span class="prtag">数量 ' + esc(n.qty) + '</span>');
+          if(n.due) parts.push('<span class="prtag">⏳' + esc(n.due) + '</span>');
+          var rmkBlock = n.rmk ? '<div class="prnote-full">' + esc(n.rmk).replace(/\n/g,'<br>') + '</div>' : '';
+          var modLine = mod ? '<div class="prmod">' + esc(mod.by) + ' · ' + fmtTimeAgo(mod.at) + ' 修改</div>' : '';
           html += '<div class="prow">' +
-            '<div class="prtop"><span class="prno">#' + p.idx + '</span></div>' +
+            '<div class="prtop"><span class="prno">#' + p.idx + '</span>' + parts.join('') + '</div>' +
             '<div class="prname">' + esc(p.t) + '</div>' +
-            '<div class="prnote">' + esc(noteLine(p)) + '</div>' +
+            rmkBlock +
+            modLine +
             '<button class="prgo" data-go="' + p.id + '">定位</button>' +
           '</div>';
         });
@@ -1329,7 +1707,15 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
     var act = t.closest('.act');
     if(act){
-      toggleAct(act.dataset.aid, act.closest('.stage'));
+      if(t.closest('.achk')){
+        toggleAct(act.dataset.aid, act.closest('.stage')); return;
+      }
+      if(t.closest('button,textarea,input')) return;
+      var aaid = act.dataset.aid;
+      var aopen = !act.classList.contains('open');
+      act.classList.toggle('open', aopen);
+      if(aopen) S.ui.openStages['a:'+aaid] = true; else delete S.ui.openStages['a:'+aaid];
+      saveSoon();
       return;
     }
 
@@ -1337,6 +1723,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(seg){
       var sid = seg.closest('.sseg').dataset.sid;
       S.stages[sid] = seg.dataset.v;
+      setLastMod(sid, room ? room.nick || '' : '', Date.now());
       markDirty(sid);
       save();
       updateSchedule();
@@ -1401,6 +1788,22 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var apf = t.closest('#apFilters button[data-f]');
     if(apf){ S.ui.appFilter = apf.dataset.f; save(); renderApps(); return; }
     if(t.closest('#apSortBtn')){ S.ui.appSort = !S.ui.appSort; save(); renderApps(); return; }
+    var costc = t.closest('.costc');
+    if(costc){ openCostEditor(costc.dataset.cid); return; }
+    if(t.closest('#closeCost')){ closeSheets(); return; }
+    if(t.closest('#costSave')){ saveCost(); return; }
+    if(t.closest('#costDel')){ askDeleteCost(); return; }
+    var costf = t.closest('#costFilters button[data-f]');
+    if(costf){ S.ui.costStatus = costf.dataset.f; save(); renderCosts(); return; }
+    if(t.closest('#costAdd')){ openCostEditor(null); return; }
+    if(t.closest('#costCsv')){ exportCostsCsv(); return; }
+    var nrmkToggle = t.closest('.nrmk .toggle');
+    if(nrmkToggle){
+      var nrmkBox = nrmkToggle.parentElement;
+      var tgt = nrmkBox.dataset.tgt;
+      if(tgt){ S.ui.lastModExpand[tgt] = !S.ui.lastModExpand[tgt]; saveSoon(); refreshAllFromState(); }
+      return;
+    }
     var pt = t.closest('#apPoints button');
     if(pt){
       var i = apPts.indexOf(pt.dataset.p);
@@ -1455,17 +1858,48 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   });
 
   document.addEventListener('input', function(e){
-    var inp = e.target.closest('.notes input');
-    if(!inp) return;
-    var item = inp.closest('.item');
-    var id = item.dataset.id;
-    var n = S.notes[id] || {loc:'', qty:'', due:''};
-    n[inp.dataset.f] = inp.value;
-    if(!n.loc && !n.qty && !n.due) delete S.notes[id];
-    else S.notes[id] = n;
-    markDirty(id);
-    notePrint(item);
-    saveSoon();
+    var tgt = e.target;
+    // 普通条目 notes（含 input 和 textarea rmk）
+    var notesWrap = tgt.closest('.notes');
+    if(notesWrap){
+      var item = tgt.closest('.item');
+      if(item){
+        var id = item.dataset.id;
+        var n = S.notes[id] || {loc:'', qty:'', due:'', rmk:''};
+        if(tgt.tagName === 'TEXTAREA' && tgt.dataset.f === 'rmk'){
+          n.rmk = tgt.value;
+        } else if(tgt.dataset.f){
+          n[tgt.dataset.f] = tgt.value;
+        }
+        if(!n.loc && !n.qty && !n.due && !n.rmk) delete S.notes[id];
+        else S.notes[id] = n;
+        markDirty(id);
+        setLastMod(id, room ? room.nick || '' : '', Date.now());
+        notePrint(item);
+        saveSoon();
+        return;
+      }
+      // 排期动作备注
+      var actAid = notesWrap.querySelector('textarea[data-tgt-aid]') ? notesWrap.querySelector('textarea[data-tgt-aid]').dataset.tgtAid : null;
+      if(actAid && tgt.dataset.tgtAid){
+        S.actNotes[actAid] = tgt.value;
+        if(!tgt.value.trim()) delete S.actNotes[actAid];
+        markDirty(actAid);
+        setLastMod(actAid, room ? room.nick || '' : '', Date.now());
+        saveSoon();
+        return;
+      }
+      // 阶段备注
+      var sid = tgt.dataset.tgtSid;
+      if(sid){
+        S.stageNotes[sid] = tgt.value;
+        if(!tgt.value.trim()) delete S.stageNotes[sid];
+        markDirty(sid);
+        setLastMod(sid, room ? room.nick || '' : '', Date.now());
+        saveSoon();
+        return;
+      }
+    }
   });
 
   window.addEventListener('afterprint', function(){
@@ -1547,17 +1981,35 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
 
   function localRow(id){
+    if(id.indexOf('cost:') === 0){
+      var c = S.costs[id.slice(5)];
+      return {status: c ? 'p' : 'n', note: c ? {date:c.date, subject:c.subject, cat:c.cat, stage:c.stage, amount:c.amount, payby:c.payby, payee:c.payee, status:c.status, rmk:c.rmk, src:c.src} : null};
+    }
     if(id.indexOf('app:') === 0){
       var a = S.apps[id.slice(4)];
       return {status: a ? a.st : 'n', note: a ? appNote(a) : null};
     }
-    if(id.indexOf('-') > 0) return {status: S.acts[id] ? 'd' : 'n', note: null};
-    if(id.charAt(0) === 's') return {status: S.stages[id] || 'n', note: null};
+    if(id.indexOf('-') > 0){
+      var rmk = S.actNotes[id] || '';
+      return {status: S.acts[id] ? 'd' : 'n', note: rmk ? {rmk: rmk} : {}};
+    }
+    if(id.charAt(0) === 's'){
+      var rmk2 = S.stageNotes[id] || '';
+      return {status: S.stages[id] || 'n', note: rmk2 ? {rmk: rmk2} : {}};
+    }
     return {status: S.items[id] || 'n', note: S.notes[id] || null};
   }
   function applyRemoteRow(row){
     var id = row.item_id, st = row.status || 'n';
-    if(id.indexOf('app:') === 0){
+    if(id.indexOf('cost:') === 0){
+      var cid = id.slice(5);
+      if(st === 'n'){ delete S.costs[cid]; }
+      else {
+        var cn = row.note || {};
+        S.costs[cid] = {date: cn.date||'', subject: cn.subject||'', cat: cn.cat||'', stage: cn.stage||'',
+          amount: cn.amount||'', payby: cn.payby||'', payee: cn.payee||'', status: cn.status||'p', rmk: cn.rmk||'', src: cn.src||'m'};
+      }
+    } else if(id.indexOf('app:') === 0){
       var uid = id.slice(4);
       if(st === 'n'){ delete S.apps[uid]; }
       else {
@@ -1565,20 +2017,26 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         var old = S.apps[uid];
         S.apps[uid] = {name: an.name||'', brand: an.brand||'', model: an.model||'',
           w: an.w||'', dep: an.dep||'', h: an.h||'', qty: an.qty||1, loc: an.loc||'',
-          points: an.points||[], rmk: an.rmk||'', st: st, ts: old ? old.ts : Date.now()};
+          points: an.points||[], rmk: an.rmk||'', st: st, ts: old ? old.ts : Date.now(),
+          price: an.price || '', buyDate: an.buyDate || '', buyChannel: an.buyChannel || '',
+          paid: !!an.paid, estCost: an.estCost || ''};
       }
-      return;
-    }
-    if(id.indexOf('-') > 0){
+    } else if(id.indexOf('-') > 0){
       if(st === 'd') S.acts[id] = true; else delete S.acts[id];
+      var an2 = row.note || {};
+      if(an2.rmk) S.actNotes[id] = an2.rmk; else delete S.actNotes[id];
     } else if(id.charAt(0) === 's'){
       if(st === 'n') delete S.stages[id]; else S.stages[id] = st;
+      var an3 = row.note || {};
+      if(an3.rmk) S.stageNotes[id] = an3.rmk; else delete S.stageNotes[id];
     } else {
       if(st === 'n') delete S.items[id]; else S.items[id] = st;
       var n = row.note || {};
-      if(n.loc || n.qty || n.due) S.notes[id] = {loc: n.loc || '', qty: n.qty || '', due: n.due || ''};
+      var hasNote = n.loc || n.qty || n.due || n.rmk;
+      if(hasNote) S.notes[id] = {loc: n.loc || '', qty: n.qty || '', due: n.due || '', rmk: n.rmk || ''};
       else delete S.notes[id];
     }
+    if(row.updated_at || row.updated_by) S.lastMod[id] = {by: row.updated_by || '', at: new Date(row.updated_at).getTime()};
   }
   function refreshAllFromState(){
     MODS.forEach(function(m){
@@ -1598,6 +2056,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     updateProgress();
     updateSchedule();
     renderApps();
+    renderCosts();
     if($('#sheetProblems').classList.contains('on')) renderProblems();
   }
 
@@ -1608,6 +2067,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
   function pushNow(){
     if(!CLOUD_ON || !room || syncing) return;
+    if(!room.nick){ setSyncUI('warn', '未填昵称，暂未同步（请点顶部同步条设置昵称）'); return; }
     var ids = Object.keys(dirty);
     if(!ids.length) return;
     if(!navigator.onLine){ setSyncUI('warn', '离线中，改动已缓存，联网后自动同步'); return; }
@@ -1633,7 +2093,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(!navigator.onLine){ setSyncUI('warn', '离线中'); return; }
     syncing = true;
     setSyncUI('warn', '同步中…');
-    api('items_state?room_id=eq.' + encodeURIComponent(room.code) + '&select=item_id,status,note,updated_at')
+    api('items_state?room_id=eq.' + encodeURIComponent(room.code) + '&select=item_id,status,note,updated_at,updated_by')
       .then(function(rows){
         var changed = false;
         applyingRemote = true;
@@ -1693,6 +2153,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
   function enterRoom(code){
     var nick = (($('#roomNick').value || '') + '').trim() || (($('#roomNick2').value || '') + '').trim();
+    if(!nick || nick.length > 12){ toast('请先填昵称（1–12 字），方便看出是谁改的'); renderRoomSheet(); openSheet('roomSheet'); return; }
     room = {code: code, nick: nick};
     saveRoom();
     meta.seen = {};
@@ -1701,7 +2162,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     renderRoomSheet();
     syncing = true;
     setSyncUI('warn', '正在合并数据…');
-    api('items_state?room_id=eq.' + encodeURIComponent(code) + '&select=item_id,status,note,updated_at')
+    api('items_state?room_id=eq.' + encodeURIComponent(code) + '&select=item_id,status,note,updated_at,updated_by')
       .then(function(rows){
         applyingRemote = true;
         (rows || []).forEach(function(row){ applyRemoteRow(row); meta.seen[row.item_id] = row.updated_at; });
@@ -1767,6 +2228,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ ids.push(it.id); }); }); });
     D.schedule.stages.forEach(function(s){ ids.push(s.id); s.acts.forEach(function(a){ ids.push(a.id); }); });
     Object.keys(S.apps).forEach(function(uid){ ids.push('app:' + uid); });
+    Object.keys(S.costs).forEach(function(cid){ ids.push('cost:' + cid); });
     var ts = new Date().toISOString();
     var rows = ids.map(function(id){ return {room_id: room.code, item_id: id, status: 'n', note: {}, updated_at: ts, updated_by: room.nick || null}; });
     setSyncUI('warn', '正在清空云端…');
@@ -1774,6 +2236,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       .then(function(){
         localStorage.removeItem(KEY);
         meta.seen = {}; dirty = {}; saveMeta();
+        // 本本地也要清空扩展字段
+        S.actNotes = {}; S.stageNotes = {}; S.lastMod = {};
         location.reload();
       })
       .catch(function(){
@@ -1792,9 +2256,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var urlRoom = '';
     try{ urlRoom = ((new URLSearchParams(location.search)).get('room') || '').toUpperCase().trim(); }catch(e){}
     if(room){
-      setSyncUI('warn', '连接中…');
-      syncCycle();
-      startPolling();
+      if(!room.nick){
+        // 老用户已加入但没填昵称 → 弹出补填
+        setSyncUI('warn', '未填昵称，请先设置（否则无法同步，也看不出是谁改的）');
+        renderRoomSheet();
+        openSheet('roomSheet');
+      } else {
+        setSyncUI('warn', '连接中…');
+        syncCycle();
+        startPolling();
+      }
     } else {
       setSyncUI('warn', '本地模式 · 点击加入云同步房间');
       if(urlRoom) $('#roomCodeInput').value = urlRoom;
