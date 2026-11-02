@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -283,6 +283,8 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .pstrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .pthumb{flex:0 0 auto;width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--card2);padding:0;cursor:pointer}
 .pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pfallback{width:100%;height:100%;display:grid;place-items:center;background:rgba(192,57,43,.14);color:#c0392b;font-size:20px;font-weight:700;border-radius:inherit}
+.pthumb:hover .pfallback{background:rgba(192,57,43,.22)}
 .photoOps{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .photobtn{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;background:var(--card2);border:1px dashed var(--line);font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none}
 .photobtn:active{background:var(--card)}
@@ -2227,8 +2229,26 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   var STORAGE_MAX_SIZE_RETRY = 5 * 1024 * 1024;
 
   function storageUrl(){ return SUPABASE_URL.replace(/\/+$/, '') + '/storage/v1'; }
-  function storagePublicUrl(path){ return storageUrl() + '/object/public/' + STORAGE_BUCKET + '/' + path; }
-  function storageThumbUrl(path){ return storageUrl() + '/object/public/' + STORAGE_BUCKET + '/' + path + '?width=200&quality=70'; }
+  // 用 IIFE 立即绑定 bucket 名，不受后续作用域影响
+  function storagePublicUrl(path){
+    var bucket = STORAGE_BUCKET || 'house-inspection-photos'; // fallback 兜底
+    return storageUrl() + '/object/public/' + bucket + '/' + path;
+  }
+  // 注意：不再使用 Supabase Image Transformation (?width=xxx)——那是 Pro-only，免费项目返回 4xx
+  // 缩略图一律用原始对象 URL，靠 CSS object-fit + 固定宽高约束尺寸
+  // storageThumbUrl 保留名但等价于 storagePublicUrl（调用方不用改）
+  var storageThumbUrl = storagePublicUrl;
+  // 兼容函数：note 里存的 p 可能是相对 path 或完整 URL，统一返回可加载的完整 URL
+  function photoUrl(p){
+    if(!p) return '';
+    // 已经是 http(s) 完整 URL → 直接返回（去掉可能的旧 Image Transformation 参数）
+    if(/^https?:\/\//.test(p)){
+      // 去掉 ?width= & ?quality= 等 Pro-only 参数
+      return p.replace(/[?&](width|quality|resize|x-resize|format|x-format)=[^&]*/gi, '').replace(/\?&/, '?').replace(/\?$/, '');
+    }
+    // 相对 path → 拼接 storage 公共地址
+    return storagePublicUrl(p);
+  }
 
   // Canvas 压缩：max 1280px edge, JPEG.quality. 若 >5MB 先拒，>1.5MB 降质量重试
   function compressImage(file){
@@ -2268,23 +2288,40 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     return rid + '_' + Date.now().toString(36) + '_' + Math.floor(Math.random()*2176782336).toString(36) + '.jpg';
   }
 
-  // 上传单张图片，返回 { path, size, uploadedAt, localFileAt } 或 null（失败）
+  // 上传单张图片，返回 { path, size, uploadedAt } 或 throw（带 status/detail 可读错误）
   function uploadPhoto(blob){
     var filename = genPhotoFilename();
     var url = storageUrl() + '/object/' + STORAGE_BUCKET + '/' + encodeURIComponent(filename);
     var headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' };
+    var readableError = function(status, detail){
+      if(status === 401) return '未授权（401）：请确认 anon key 有效';
+      if(status === 403) return '无权限（403）：请确认 Storage bucket 策略已执行 SQL';
+      if(status === 404) return '未找到（404）：请确认 bucket 名 `' + STORAGE_BUCKET + '` 已创建';
+      if(status === 413) return '文件过大（413）：已压缩后仍超限';
+      if(status >= 500) return '服务器错误（HTTP ' + status + '）：Supabase 可能暂时不可用';
+      return 'HTTP ' + status + '：' + (detail || '未知错误');
+    };
     return fetch(url, { method: 'POST', headers: headers, body: blob })
       .then(function(r){
         if(!r.ok){
           return r.text().then(function(t){
-            var e = new Error('上传失败 HTTP ' + r.status);
-            e.detail = t; e.status = r.status;
+            var msg = readableError(r.status, t);
+            var e = new Error(msg);
+            e.status = r.status; e.detail = t; e.readableMsg = msg;
             throw e;
           });
         }
         return { path: filename, size: blob.size, uploadedAt: new Date().toISOString() };
       })
-      .catch(function(e){ throw e; });
+      .catch(function(e){
+        // fetch 网络错误（不是 HTTP error）
+        if(!e.status && e.name && e.name === 'TypeError'){
+          var ne = new Error('网络失败：请检查手机 Wi-Fi/移动数据连接');
+          ne.networkError = true;
+          throw ne;
+        }
+        throw e;
+      });
   }
 
   // 离线暂存 → dataURL（localStorage 里）。最多 25 张队列
@@ -2308,24 +2345,48 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(!S.photoQueue || !S.photoQueue.length) return;
     if(uploadingQueue) return;
     uploadingQueue = true;
+    var failCount = 0;
+    var successCount = 0;
+    // 用 index 手动迭代，因为 splice 会缩短数组
     for(var i = 0; i < S.photoQueue.length; i++){
       var item = S.photoQueue[i];
       try{
-        var blob = await (await fetch(item.d)).blob();
+        // dataURL → blob：fetch(dataURL).blob() 在现代浏览器都支持
+        var blob;
+        try{ blob = await (await fetch(item.d)).blob(); }
+        catch(_){ // 兜底：手动从 dataURL 解析
+          var parts = item.d.split(',');
+          var meta = parts[0]; var b64 = parts[1];
+          var mime = /data:(.*?);base64/.exec(meta)?.[1] || 'image/jpeg';
+          var bin = atob(b64); var arr = new Uint8Array(bin.length);
+          for(var j = 0; j < bin.length; j++) arr[j] = bin.charCodeAt(j);
+          blob = new Blob([arr], { type: mime });
+        }
         var res = await uploadPhoto(blob);
-        // 写入目标 note
         appendPhotoToItem(item.k, item.ph, res);
+        S.photoQueue.splice(i, 1); i--;
+        successCount++;
       } catch(e){
-        // 失败留在队列，下次继续
-        console.warn('离线上传失败', e);
-        continue;
+        failCount++;
+        // 临时失败（网络/服务端）留在队列下次继续；权限类错误应该剔除
+        if(e.status === 401 || e.status === 403 || e.status === 404){
+          // 策略/配置问题 → 别重试了，删队列 + toast 提示
+          S.photoQueue.splice(i, 1); i--;
+          console.warn('离线上传永久性失败（HTTP ' + e.status + '），已从队列移除：', e.readableMsg || e.message);
+        } else {
+          console.warn('离线上传临时失败（' + (e.networkError ? '网络' : 'HTTP ' + (e.status || '?')) + '），保留队列下次重试：', e.message);
+        }
+        if(failCount <= 2){ // 最多前两次失败给 toast，不要刷屏
+          toast('照片上传失败：' + (e.networkError ? '网络断开' : (e.readableMsg || e.message)) + '（共 ' + S.photoQueue.length + ' 张待上传）');
+        }
       }
-      // 成功 → 移除队列项
-      S.photoQueue.splice(i, 1); i--;
-      save();
-      refreshAllFromState();
     }
     uploadingQueue = false;
+    if(successCount > 0){
+      save();
+      refreshAllFromState();
+      toast('✓ 补传成功 ' + successCount + ' 张照片');
+    }
   }
   var uploadingQueue = false;
 
@@ -2386,7 +2447,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(!list.length) return '';
     return '<div class="pstrip">' + list.map(function(p,i){
       if(phaseFilter && p.ph !== phaseFilter) return '';
-      return '<button type="button" class="pthumb" data-key="' + itemKey + '" data-i="' + i + '" aria-label="查看照片"><img loading="lazy" src="' + storageThumbUrl(p.p) + '" alt="photo"></button>';
+      var src = photoUrl(p.p);
+      return '<button type="button" class="pthumb" data-key="' + itemKey + '" data-i="' + i + '" aria-label="查看照片">' +
+        '<img loading="lazy" src="' + src + '" alt="photo" onerror="this.onerror=null;var d=Object.assign(document.createElement(\'div\'),{className:\'pfallback\',title:\'加载失败，点击重试\',textContent:\'!\'});this.replaceWith(d);"></button>';
     }).join('') + '</div>';
   }
 
@@ -2405,16 +2468,19 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       var res = await uploadPhoto(blob2);
       if(res){
         appendPhotoToItem(itemKey, phase, res);
-        toast('照片已上传');
+        toast('照片已上传 ✓');
         refreshAllFromState();
       }
     } catch(e){
-      if(e.status === 403 || e.status === 401){ toast('上传被拒绝（HTTP ' + e.status + '）：请确认 Storage bucket 策略已执行 SQL'); }
-      else if(e.status === 404){ toast('上传失败（404）：请确认 bucket 名 `' + STORAGE_BUCKET + '` 已创建'); }
-      else if(e.message && e.message.indexOf('文件过大') >= 0){ toast(e.message); }
-      else { toast('上传失败：' + (e.status ? 'HTTP ' + e.status : (e.message || e)) + '，已离线暂存');
-        try{ var blob3 = await compressImage(fileList[0]); var dataUrl3 = await fileToDataURL(blob3); offlineEnqueue(itemKey, phase, dataUrl3, fileList[0].name); } catch(_){}
-      }
+      var readable = e.readableMsg || e.message;
+      if(e.networkError){ toast('网络断开，已自动离线暂存（联网后自动上传）'); }
+      else { toast('上传失败：' + readable + ' → 已离线暂存'); }
+      // 失败时也离线暂存，不让用户丢照片
+      try{
+        var blob3 = await compressImage(fileList[0]);
+        var dataUrl3 = await fileToDataURL(blob3);
+        offlineEnqueue(itemKey, phase, dataUrl3, fileList[0].name);
+      } catch(_){}
     }
   }
 
@@ -2440,11 +2506,15 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var g = $('#gallery'); if(!g) return;
     if(!list.length){ closeGallery(); return; }
     var p = list[galleryState.i];
-    g.querySelector('#gImg').src = storagePublicUrl(p.p);
+    var img = g.querySelector('#gImg');
+    img.src = photoUrl(p.p) + (photoUrl(p.p).indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now(); // cache bust
     g.querySelector('#gMeta').textContent = (galleryState.i+1) + '/' + list.length + ' · ' + phaseLabel(p.ph) + (p.t ? ' · ' + fmtTimeAgo(p.t) : '');
     g.querySelector('#gDel').hidden = false;
-    var img = g.querySelector('#gImg');
-    img.onerror = function(){ toast('图片加载失败（可能是 bucket 策略未生效）'); };
+    img.onerror = function(){
+      toast('图片加载失败（可能是 bucket 策略未生效或网络问题），点击重试');
+      // 重试：加时间戳防止缓存
+      img.src = photoUrl(p.p) + '?_=' + Date.now();
+    };
   }
   function galleryDelete(){
     showConfirm('删除这张照片？', '只能从本地 note 移除，Storage 里原文件不会自动删除（请在 Supabase Dashboard 清理）', '删除', function(){
