@@ -279,6 +279,41 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
   *{transition:none!important;scroll-behavior:auto!important}
 }
 
+/* ---------- 照片 / Gallery ---------- */
+.pstrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pthumb{flex:0 0 auto;width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--card2);padding:0;cursor:pointer}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photoOps{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.photobtn{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;background:var(--card2);border:1px dashed var(--line);font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none}
+.photobtn:active{background:var(--card)}
+.pwait{color:var(--amber);font-size:10.5px;margin-left:2px}
+#gallery{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.92);display:none;place-items:center}
+#gallery.on{display:grid}
+#gallery img{max-width:94vw;max-height:80vh;object-fit:contain;background:#111;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,.7)}
+.gclose{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);border:0;color:#fff;font-size:20px;display:grid;place-items:center;cursor:pointer}
+.gclose svg{width:20px;height:20px}
+.gnav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);border:0;color:#fff;font-size:30px;line-height:1;cursor:pointer}
+.gnav.gprev{left:14px}
+.gnav.gnext{right:14px}
+.gmeta{position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 22px;color:#fff;font-size:13px}
+.gdel{background:rgba(255,80,80,.25);border:1px solid rgba(255,80,80,.6);color:#ffd0d0;border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer}
+.gdel:active{background:rgba(255,80,80,.5)}
+
+/* ---------- 严重度 / 复验 ---------- */
+.sevPick{display:flex;gap:4px;align-items:center;margin-left:4px;flex:0 0 auto}
+.sevPick button{height:22px;padding:0 7px;border-radius:10px;border:1px solid var(--line);background:var(--card2);font-size:10px;color:var(--muted);cursor:pointer}
+.sevPick button.on.sevA,.sev-tag.sev-A{background:#fff0e0;border-color:#d44b00;color:#d44b00}
+.sevPick button.on.sevB,.sev-tag.sev-B{background:#fffbe0;border-color:#b38600;color:#947000}
+.sevPick button.on.sevC,.sev-tag.sev-C{background:#eef1e5;border-color:#8ea58e;color:#5b7a5c}
+.sev-tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:10px;font-weight:600;margin-right:4px}
+.revBtn{margin-left:4px;height:24px;padding:0 8px;border-radius:10px;background:var(--green);border:0;color:#fff;font-size:11px;font-weight:600;cursor:pointer}
+.revBtn:active{opacity:.85}
+.revRow{margin-top:5px;padding:5px 8px;background:rgba(34,139,34,.08);border-radius:6px;font-size:11.5px;color:var(--muted);line-height:1.6}
+.revRow b{font-weight:600}
+.revRow .pass{color:var(--green)}
+.revRow .fail{color:#c0392b}
+.sh-label{font-size:11px;color:var(--muted);margin-right:4px;white-space:nowrap}
+
 /* ---------- 打印 ---------- */
 @media print{
   @page{size:A4;margin:12mm}
@@ -448,6 +483,12 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
         </button>
       </div>
       <div class="sh-actions">
+        <span class="sh-label">严重度</span>
+        <button class="sbtn" data-sevfilter="all">全部</button>
+        <button class="sbtn" data-sevfilter="A">A 安全</button>
+        <button class="sbtn" data-sevfilter="B">B 使用</button>
+        <button class="sbtn" data-sevfilter="C">C 观感</button>
+        <button class="sbtn pri" id="btnPriorityCsv">导出优先级整改单</button>
         <button class="sbtn" id="btnCopy">复制文本</button>
         <button class="sbtn" id="btnCsv">导出 CSV</button>
         <button class="sbtn" id="btnPrintProb">打印</button>
@@ -665,9 +706,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   /* ---------- 状态 ---------- */
   function blank(){
-    return {items:{},notes:{},stages:{},acts:{},apps:{},actNotes:{},stageNotes:{},lastMod:{},costs:{},
+    return {items:{},notes:{},stages:{},acts:{},apps:{},actNotes:{},stageNotes:{},lastMod:{},costs:{},actPhotos:{},photoQueue:[],
       ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true},appFilter:'all',appSort:false,lastModExpand:{},
-      costFilter:'all',costStatus:'all',costSort:'date-desc'}};
+      costFilter:'all',costStatus:'all',costSort:'date-desc',sevFilter:'all'}};
   }
   var S;
   try{ S = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ S = null; }
@@ -675,7 +716,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   S = Object.assign({}, B, S || {});
   S.items = S.items || {}; S.notes = S.notes || {}; S.stages = S.stages || {}; S.acts = S.acts || {};
   S.apps = S.apps || {}; S.actNotes = S.actNotes || {}; S.stageNotes = S.stageNotes || {}; S.lastMod = S.lastMod || {};
-  S.costs = S.costs || {};
+  S.costs = S.costs || {}; S.actPhotos = S.actPhotos || {};
+  S.photoQueue = S.photoQueue || [];
   S.ui.appFilter = S.ui.appFilter || 'all';
   S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
@@ -746,6 +788,30 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '</div>' : '';
     var modTxt = modLabel(it.id);
     var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    // 严重度 badge
+    var sev = note.sev || 'C';
+    var sevHtml = '<div class="sevPick" data-sid="' + it.id + '">' +
+      '<button type="button" data-sev="A" class="sevA' + (sev==='A'?' on':'') + '">A 安全</button>' +
+      '<button type="button" data-sev="B" class="sevB' + (sev==='B'?' on':'') + '">B 使用</button>' +
+      '<button type="button" data-sev="C" class="sevC' + (sev==='C'?' on':'') + '">C 观感</button>' +
+    '</div>';
+    // 复验
+    var rev = note.rev || null;
+    var revHtml = rev ? '<div class="revRow">已复验 · <b>' + esc(rev.by) + '</b> · ' + fmtTimeAgo(rev.at) + ' · <b class="' + (rev.result==='pass'?'pass':'fail') + '">' + (rev.result==='pass'?'通过':'不通过') + '</b>' + (rev.rmk ? ' · ' + esc(rev.rmk) : '') + '</div>' : '';
+    // 照片条
+    var phK = it.id;
+    var photos = photosOf(phK);
+    var beforeStrip = photosHtml(phK, 'before');
+    var afterStrip = photosHtml(phK, 'after');
+    var pendingCnt = (S.photoQueue || []).filter(function(q){ return q.k === phK; }).length;
+    var photoBtns = open || photos.length ?
+      '<div class="photoOps">' +
+        '<label class="photobtn"><input type="file" accept="image/*" capture="environment" multiple hidden data-key="' + phK + '" data-ph="before">' +
+          '<span>📷 整改前 ' + (pendingCnt ? '<b class="pwait">待传 ' + pendingCnt + '</b>' : '') + '</span></label>' +
+        '<label class="photobtn"><input type="file" accept="image/*" capture="environment" multiple hidden data-key="' + phK + '" data-ph="after">' +
+          '<span>📷 复验后</span></label>' +
+      '</div>' : '';
+    var revBtn = isFix ? '<button type="button" class="revBtn" data-key="' + phK + '">✓ 复验</button>' : '';
     return '<div class="item ' + clsOf(st) + (open?' open':'') + '" id="item-' + it.id + '" data-id="' + it.id + '" data-mod="' + m + '" data-st="' + st + '">' +
       '<button class="chk" type="button" aria-label="切换完成状态"><span class="circ">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg><b>!</b>' +
@@ -753,16 +819,22 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '<div class="ibody">' +
         '<div class="itop"><span class="pmark"></span><span class="ino">' + it.idx + '</span>' +
           '<span class="ititle">' + esc(it.t) + '</span>' +
+          sevHtml +
           '<button class="rbtn" type="button"><span>整改</span></button>' +
+          revBtn +
         '</div>' +
         '<p class="istd">' + esc(it.s) + '</p>' +
         '<div class="iextra"><span>工具 · ' + esc(it.w || '无') + '</span>' +
           '<button class="more" type="button">' + (open?'收起标准':'展开标准') + '</button></div>' +
+        beforeStrip +
         rmkHtml +
         '<div class="notes show">' +
           locRow +
           '<label class="nf"><span>备注' + (isFix ? '' : '（所有状态可写）') + '</span><textarea data-f="rmk" placeholder="如：2024/5/8 已重新打胶，一周后复查…">' + esc(note.rmk||'') + '</textarea></label>' +
+          photoBtns +
+          afterStrip +
         '</div>' +
+        revHtml +
         modHtml +
         '<div class="note-print"></div>' +
       '</div>' +
@@ -813,6 +885,13 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var rmkEdit = open ? '<div class="notes show"><label class="nf"><span>备注</span><textarea data-f="rmk" data-tgt-aid="' + a.id + '" placeholder="如：已联系木工，本周五进场…">' + esc(rmk) + '</textarea></label></div>' : '';
     var modTxt = modLabel(a.id);
     var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    var phK = a.id;
+    var phStrip = photosHtml(phK);
+    var photoBtns = open || (S.actPhotos[phK] && S.actPhotos[phK].length) ?
+      '<div class="photoOps">' +
+        '<label class="photobtn"><input type="file" accept="image/*" capture="environment" multiple hidden data-key="' + phK + '" data-ph="before">' +
+          '<span>📷 照片</span></label>' +
+      '</div>' : '';
     return '<div class="act' + (done?' done':'') + (open?' open':'') + '" data-aid="' + a.id + '">' +
       '<button class="achk" type="button" aria-label="切换完成"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg></button>' +
       '<div class="amain">' +
@@ -821,7 +900,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
           '<span class="adays">' + esc(a.days) + '天</span>' +
         '</div>' +
         '<span class="adesc">' + esc(a.desc) + '</span>' +
-        rmkPreview + rmkEdit + modHtml +
+        rmkPreview + rmkEdit + photoBtns + phStrip + modHtml +
       '</div>' +
     '</div>';
   }
@@ -973,8 +1052,68 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     el.dataset.st = st;
     el.classList.remove('none','done','fix');
     el.classList.add(clsOf(st));
-    el.querySelector('.rbtn span').textContent = st === 'r' ? '待整改' : '整改';
-    el.querySelector('.pmark').textContent = st === 'd' ? '✓' : st === 'r' ? '✗' : '□';
+    var rbtn = el.querySelector('.rbtn');
+    if(rbtn) rbtn.querySelector('span').textContent = st === 'r' ? '待整改' : '整改';
+    var pmark = el.querySelector('.pmark');
+    if(pmark) pmark.textContent = st === 'd' ? '✓' : st === 'r' ? '✗' : '□';
+    // revBtn: 仅在待整改(r)状态显示
+    var existingRev = el.querySelector('.revBtn');
+    if(st === 'r' && !existingRev){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'revBtn';
+      btn.dataset.key = id;
+      btn.textContent = '✓ 复验';
+      if(rbtn) rbtn.after(btn);
+    } else if(st !== 'r' && existingRev){
+      existingRev.remove();
+    }
+    // sevPick: 更新严重度 on 状态
+    var sevPick = el.querySelector('.sevPick');
+    if(sevPick){
+      var curSev = (S.notes[id] || {}).sev || 'C';
+      sevPick.querySelectorAll('button').forEach(function(b){
+        b.classList.toggle('on', b.dataset.sev === curSev);
+      });
+    }
+    // revRow: 更新复验结果显示行
+    var oldRevRow = el.querySelector('.revRow');
+    var rev = (S.notes[id] || {}).rev;
+    if(rev){
+      if(!oldRevRow){
+        // 插入 revRow
+        var revRow = document.createElement('div');
+        revRow.className = 'revRow';
+        revRow.innerHTML = '已复验 · <b>' + esc(rev.by||'') + '</b> · ' + fmtTimeAgo(rev.at) + ' · <b class="' + (rev.result==='pass'?'pass':'fail') + '">' + (rev.result==='pass'?'通过':'不通过') + '</b>' + (rev.rmk ? ' · ' + esc(rev.rmk) : '');
+        var nrmk = el.querySelector('.nrmk, .notes');
+        if(nrmk) nrmk.before(revRow);
+        else el.querySelector('.ibody')?.appendChild(revRow);
+      } else {
+        oldRevRow.innerHTML = '已复验 · <b>' + esc(rev.by||'') + '</b> · ' + fmtTimeAgo(rev.at) + ' · <b class="' + (rev.result==='pass'?'pass':'fail') + '">' + (rev.result==='pass'?'通过':'不通过') + '</b>' + (rev.rmk ? ' · ' + esc(rev.rmk) : '');
+      }
+    } else if(oldRevRow){
+      oldRevRow.remove();
+    }
+    // 照片按钮: 展开或已有照片时显示
+    var open = el.classList.contains('open');
+    var phCnt = (S.notes[id]?.photos || []).length;
+    var pendingCnt = (S.photoQueue || []).filter(function(q){ return q.k === id; }).length;
+    var ops = el.querySelector('.photoOps');
+    if((open || phCnt > 0 || pendingCnt > 0) && !ops){
+      // 插入 photoOps
+      ops = document.createElement('div');
+      ops.className = 'photoOps';
+      ops.innerHTML =
+        '<label class="photobtn"><input type="file" accept="image/*" capture="environment" multiple hidden data-key="' + id + '" data-ph="before">' +
+          '<span>📷 整改前' + (pendingCnt ? ' <b class="pwait">待传 ' + pendingCnt + '</b>' : '') + '</span></label>' +
+        '<label class="photobtn"><input type="file" accept="image/*" capture="environment" multiple hidden data-key="' + id + '" data-ph="after">' +
+          '<span>📷 复验后</span></label>';
+      var notes = el.querySelector('.notes');
+      if(notes) notes.before(ops);
+      else el.querySelector('.ibody')?.appendChild(ops);
+    } else if(ops && !open && phCnt === 0 && pendingCnt === 0){
+      ops.remove();
+    }
     notePrint(el);
   }
 
@@ -1006,6 +1145,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var more = el.querySelector('.more');
     if(more) more.textContent = open ? '收起标准' : '展开标准';
     saveSoon();
+    refreshItem(id); // 照片按钮随展开/折叠出现/隐藏
   }
 
   var lp = {timer:null, fired:false, x:0, y:0};
@@ -1246,7 +1386,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   function appNote(a){
     return {name:a.name, brand:a.brand||'', model:a.model||'', w:a.w||'', dep:a.dep||'', h:a.h||'',
       qty:a.qty||1, loc:a.loc||'', points:a.points||[], rmk:a.rmk||'',
-      price: a.price || '', buyDate: a.buyDate || '', buyChannel: a.buyChannel || '', paid: !!a.paid, estCost: a.estCost || ''};
+      price: a.price || '', buyDate: a.buyDate || '', buyChannel: a.buyChannel || '', paid: !!a.paid, estCost: a.estCost || '',
+      photos: (a.photos || []).slice()};
   }
   function appCardHTML(uid, a){
     var dims = (a.w||a.dep||a.h) ? (a.w||'?') + ' × ' + (a.dep||'?') + ' × ' + (a.h||'?') + ' mm' : '';
@@ -1259,6 +1400,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var mid = 'app:' + uid;
     var modTxt = modLabel(mid);
     var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
+    var phStrip = photosHtml(mid);
     return '<div class="appc" data-uid="' + uid + '" role="button">' +
       '<div class="arow1"><span class="aname">' + esc(a.name) + '</span>' +
         '<span class="badge ' + a.st + '">' + APP_ST[a.st] + '</span></div>' +
@@ -1266,6 +1408,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '<div class="ameta">' + meta.join('　·　') + '</div>' +
       (a.points && a.points.length ? '<div class="ptags">' + a.points.map(function(p){ return '<i>' + esc(p) + '</i>'; }).join('') + '</div>' : '') +
       (a.rmk ? '<div class="armk">' + esc(a.rmk) + '</div>' : '') +
+      phStrip +
       modHtml +
     '</div>';
   }
@@ -1561,15 +1704,21 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
 
   function renderProblems(){
-    var list = getProblems();
-    $('#probTitle').textContent = '问题清单（' + list.length + '）';
+    var all = getProblems();
+    var f = S.ui.sevFilter || 'all';
+    var list = all.filter(function(p){
+      if(f === 'all') return true;
+      var s = (S.notes[p.id] && S.notes[p.id].sev) || 'C';
+      return s === f;
+    });
+    $('#probTitle').textContent = '问题清单（' + list.length + (all.length !== list.length ? '/' + all.length : '') + '）';
     var body = $('#probBody');
     if(!list.length){
-      body.innerHTML = '<div class="pempty">暂无待整改项<br><span>在清单中点击「整改」或长按条目即可标记</span></div>';
-      $('#probTip').textContent = '待整改项汇总，可直接发给施工方或物业。';
+      body.innerHTML = '<div class="pempty">暂无待整改项<br><span>' + (f !== 'all' ? '当前严重度筛选下无匹配' : '在清单中点击「整改」或长按条目即可标记') + '</span></div>';
+      $('#probTip').textContent = f !== 'all' ? '当前筛选：严重度 ' + f : '待整改项汇总，可直接发给施工方或物业。';
       return;
     }
-    $('#probTip').textContent = '共 ' + list.length + ' 项待整改 · 日期 ' + todayStr() + '。可复制文本或导出 CSV 发给施工方 / 物业。';
+    $('#probTip').textContent = '共 ' + list.length + ' 项待整改' + (f !== 'all' ? '（筛选 ' + f + '）' : '') + ' · 日期 ' + todayStr() + '。点击「导出优先级整改单」按 A→B→C 排序。';
     var html = '';
     MODS.forEach(function(m){
       var ps = list.filter(function(p){ return p.m === m; });
@@ -1586,10 +1735,14 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
           if(n.loc) parts.push('<span class="prtag">📍' + esc(n.loc) + '</span>');
           if(n.qty) parts.push('<span class="prtag">数量 ' + esc(n.qty) + '</span>');
           if(n.due) parts.push('<span class="prtag">⏳' + esc(n.due) + '</span>');
+          var sev = n.sev || 'C';
+          var sevHtml = '<span class="sev-tag sev-' + sev + '">' + sev + '</span>';
+          var phs = photosOf(p.id);
+          var phCount = phs.length ? '<span class="prtag">📷 ' + phs.length + '</span>' : '';
           var rmkBlock = n.rmk ? '<div class="prnote-full">' + esc(n.rmk).replace(/\n/g,'<br>') + '</div>' : '';
           var modLine = mod ? '<div class="prmod">' + esc(mod.by) + ' · ' + fmtTimeAgo(mod.at) + ' 修改</div>' : '';
           html += '<div class="prow">' +
-            '<div class="prtop"><span class="prno">#' + p.idx + '</span>' + parts.join('') + '</div>' +
+            '<div class="prtop"><span class="prno">#' + p.idx + '</span>' + sevHtml + phCount + parts.join('') + '</div>' +
             '<div class="prname">' + esc(p.t) + '</div>' +
             rmkBlock +
             modLine +
@@ -1686,6 +1839,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   function closeSheets(){
     $$('.sheet').forEach(function(s){ s.classList.remove('on'); });
     $('#confirmDlg').classList.remove('on');
+    closeGallery();
     lock(false);
   }
 
@@ -1713,6 +1867,13 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
 
   /* ---------- 事件 ---------- */
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      if($('#gallery').classList.contains('on')){ closeGallery(); return; }
+      closeSheets();
+    } else if(e.key === 'ArrowLeft' && $('#gallery').classList.contains('on')){ galleryNav(-1); }
+    else if(e.key === 'ArrowRight' && $('#gallery').classList.contains('on')){ galleryNav(1); }
+  });
   document.addEventListener('click', function(e){
     var t = e.target;
 
@@ -1744,6 +1905,19 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       if(t.closest('.chk')){ toggleDone(item); return; }
       if(t.closest('.rbtn')){ toggleFix(item); return; }
       if(t.closest('.more')){ toggleOpen(item); return; }
+      // item 内部专用按钮，在这里直接处理
+      var sevBtn = t.closest('.sevPick button');
+      if(sevBtn){
+        var sid = sevBtn.parentElement.dataset.sid;
+        S.notes[sid] = S.notes[sid] || {};
+        S.notes[sid].sev = sevBtn.dataset.sev;
+        markDirty(sid); setLastMod(sid, room ? room.nick || '' : '', Date.now()); save(); refreshAllFromState(); return;
+      }
+      var revBtn = t.closest('.revBtn');
+      if(revBtn){ openRevSheet(revBtn.dataset.key); return; }
+      var thumb = t.closest('.pthumb');
+      if(thumb){ openGallery(thumb.dataset.key, +thumb.dataset.i); return; }
+      if(t.closest('.photoOps')) return; // file input label，不让 toggleOpen
       if(t.closest('input,label,.notes')) return;
       if(lp.fired){ lp.fired = false; return; }
       toggleOpen(item);
@@ -1865,6 +2039,10 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     if(t.closest('#btnLeaveRoom')){ closeSheets(); leaveRoom(); return; }
     if(t.closest('#closeMenu')){ closeSheets(); return; }
+    if(t.closest('#closeRev')){ closeSheets(); return; }
+    if(t.closest('#btnPriorityCsv')){ priorityCSV(); return; }
+    var sevf = t.closest('[data-sevfilter]');
+    if(sevf){ S.ui.sevFilter = sevf.dataset.sevfilter || 'all'; save(); renderProblems(); return; }
     if(t.closest('#btnCopy')){ copyText(problemsText(), '问题清单已复制'); return; }
     if(t.closest('#btnCsv')){ exportCsv(); return; }
     if(t.closest('#btnPrintProb')){
@@ -1900,6 +2078,53 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
     var sheet = t.closest('.sheet');
     if(sheet && t === sheet){ closeSheets(); }
+
+    // 严重度选择
+    var sevBtn = t.closest('.sevPick button');
+    if(sevBtn){
+      var sid = sevBtn.parentElement.dataset.sid;
+      S.notes[sid] = S.notes[sid] || {};
+      S.notes[sid].sev = sevBtn.dataset.sev;
+      markDirty(sid); setLastMod(sid, room ? room.nick || '' : '', Date.now()); save(); refreshAllFromState(); return;
+    }
+    // 复验按钮
+    var revBtn = t.closest('.revBtn');
+    if(revBtn){ openRevSheet(revBtn.dataset.key); return; }
+    // 缩略图点击 → gallery
+    var thumb = t.closest('.pthumb');
+    if(thumb){ openGallery(thumb.dataset.key, +thumb.dataset.i); return; }
+    // gallery 关闭 / 切换
+    var gprev = t.closest('#gPrev');
+    if(gprev){ galleryNav(-1); return; }
+    var gnext = t.closest('#gNext');
+    if(gnext){ galleryNav(1); return; }
+    var gclose = t.closest('#gClose');
+    if(gclose){ closeGallery(); return; }
+    var gdel = t.closest('#gDel');
+    if(gdel){ galleryDelete(); return; }
+    var g = t.closest('#gallery');
+    if(g && t === g){ closeGallery(); }
+  });
+
+  // 照片 file input
+  document.addEventListener('change', function(e){
+    var fi = e.target;
+    if(fi.tagName === 'INPUT' && fi.type === 'file' && fi.dataset && fi.dataset.key){
+      var key = fi.dataset.key, phase = fi.dataset.ph || 'before';
+      if(fi.files && fi.files.length){ handlePhotoUpload(key, phase, fi.files); }
+      fi.value = ''; // reset so re-pick same file still triggers
+      refreshAllFromState();
+      return;
+    }
+    if(fi.id === 'revResult'){ revResultSel = fi.value; return; }
+    if(fi.id === 'revRmk'){ revRmkVal = fi.value; return; }
+  });
+
+  // 复验 sheet 确认
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if(t.closest('#revCancel')){ closeSheets(); return; }
+    if(t.closest('#revSave')){ saveRev(); return; }
   });
 
   document.addEventListener('input', function(e){
@@ -1993,6 +2218,294 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     });
   }
 
+  /* ---------- 照片 / Supabase Storage ---------- */
+  var STORAGE_BUCKET = 'house-inspection-photos';
+  var STORAGE_MAX_EDGE = 1280;
+  var STORAGE_QUALITY_FIRST = 0.8;
+  var STORAGE_QUALITY_RETRY = 0.5;
+  var STORAGE_MAX_SIZE_FIRST = 1.5 * 1024 * 1024;
+  var STORAGE_MAX_SIZE_RETRY = 5 * 1024 * 1024;
+
+  function storageUrl(){ return SUPABASE_URL.replace(/\/+$/, '') + '/storage/v1'; }
+  function storagePublicUrl(path){ return storageUrl() + '/object/public/' + STORAGE_BUCKET + '/' + path; }
+  function storageThumbUrl(path){ return storageUrl() + '/object/public/' + STORAGE_BUCKET + '/' + path + '?width=200&quality=70'; }
+
+  // Canvas 压缩：max 1280px edge, JPEG.quality. 若 >5MB 先拒，>1.5MB 降质量重试
+  function compressImage(file){
+    return new Promise(function(resolve, reject){
+      if(file.size > STORAGE_MAX_SIZE_RETRY){ reject(new Error('文件过大（' + Math.round(file.size/1024) + 'KB），请选 5MB 以下图片')); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        URL.revokeObjectURL(url);
+        var ratio = Math.min(1, STORAGE_MAX_EDGE / Math.max(img.width, img.height));
+        var w = Math.round(img.width * ratio);
+        var h = Math.round(img.height * ratio);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob){
+          if(!blob){ reject(new Error('压缩失败')); return; }
+          if(blob.size > STORAGE_MAX_SIZE_FIRST){
+            // 再压一次，质量 0.5
+            canvas.toBlob(function(blob2){
+              if(!blob2){ reject(new Error('压缩失败')); return; }
+              resolve(blob2);
+            }, 'image/jpeg', STORAGE_QUALITY_RETRY);
+          } else {
+            resolve(blob);
+          }
+        }, 'image/jpeg', STORAGE_QUALITY_FIRST);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('图片加载失败')); };
+      img.src = url;
+    });
+  }
+
+  function genPhotoFilename(){
+    var rid = (room && room.code) ? room.code.toLowerCase() : 'local';
+    return rid + '_' + Date.now().toString(36) + '_' + Math.floor(Math.random()*2176782336).toString(36) + '.jpg';
+  }
+
+  // 上传单张图片，返回 { path, size, uploadedAt, localFileAt } 或 null（失败）
+  function uploadPhoto(blob){
+    var filename = genPhotoFilename();
+    var url = storageUrl() + '/object/' + STORAGE_BUCKET + '/' + encodeURIComponent(filename);
+    var headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' };
+    return fetch(url, { method: 'POST', headers: headers, body: blob })
+      .then(function(r){
+        if(!r.ok){
+          return r.text().then(function(t){
+            var e = new Error('上传失败 HTTP ' + r.status);
+            e.detail = t; e.status = r.status;
+            throw e;
+          });
+        }
+        return { path: filename, size: blob.size, uploadedAt: new Date().toISOString() };
+      })
+      .catch(function(e){ throw e; });
+  }
+
+  // 离线暂存 → dataURL（localStorage 里）。最多 25 张队列
+  function fileToDataURL(blob){
+    return new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(){ resolve(fr.result); };
+      fr.onerror = function(){ reject(new Error('读取失败')); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  function offlineEnqueue(itemKey, phase, dataURL, filename){
+    S.photoQueue = S.photoQueue || [];
+    if(S.photoQueue.length >= 25){ toast('离线暂存队列已满（25 张），请联网后再拍'); return; }
+    S.photoQueue.push({ k: itemKey, ph: phase, d: dataURL, fn: filename, at: Date.now() });
+    save();
+    toast('已离线暂存（联网后自动上传）');
+  }
+  async function processPhotoQueue(){
+    if(!CLOUD_ON || !room || !navigator.onLine) return;
+    if(!S.photoQueue || !S.photoQueue.length) return;
+    if(uploadingQueue) return;
+    uploadingQueue = true;
+    for(var i = 0; i < S.photoQueue.length; i++){
+      var item = S.photoQueue[i];
+      try{
+        var blob = await (await fetch(item.d)).blob();
+        var res = await uploadPhoto(blob);
+        // 写入目标 note
+        appendPhotoToItem(item.k, item.ph, res);
+      } catch(e){
+        // 失败留在队列，下次继续
+        console.warn('离线上传失败', e);
+        continue;
+      }
+      // 成功 → 移除队列项
+      S.photoQueue.splice(i, 1); i--;
+      save();
+      refreshAllFromState();
+    }
+    uploadingQueue = false;
+  }
+  var uploadingQueue = false;
+
+  // itemKey: 'v5' / 'a12' / 's1-1' / 'app:uXXXX'
+  function appendPhotoToItem(itemKey, phase, info){
+    if(!info || !info.path) return;
+    var photo = { p: info.path, t: info.uploadedAt || new Date().toISOString(), ph: phase || 'before' };
+    if(itemKey.indexOf('app:') === 0){
+      var uid = itemKey.slice(4);
+      S.apps[uid] = S.apps[uid] || {};
+      S.apps[uid].photos = S.apps[uid].photos || [];
+      if(S.apps[uid].photos.length >= 6){ toast('每个条目最多 6 张'); return; }
+      S.apps[uid].photos.push(photo);
+    } else if(itemKey.indexOf('-') > 0){
+      S.actPhotos = S.actPhotos || {};
+      S.actPhotos[itemKey] = S.actPhotos[itemKey] || [];
+      if(S.actPhotos[itemKey].length >= 6){ toast('每个条目最多 6 张'); return; }
+      S.actPhotos[itemKey].push(photo);
+    } else {
+      S.notes[itemKey] = S.notes[itemKey] || {};
+      S.notes[itemKey].photos = S.notes[itemKey].photos || [];
+      if(S.notes[itemKey].photos.length >= 6){ toast('每个条目最多 6 张'); return; }
+      S.notes[itemKey].photos.push(photo);
+    }
+    setLastMod(itemKey, room ? room.nick || '' : '', Date.now());
+    markDirty(itemKey);
+    save();
+  }
+
+  function removePhotoFromItem(itemKey, idx){
+    if(itemKey.indexOf('app:') === 0){
+      var uid = itemKey.slice(4);
+      if(S.apps[uid] && S.apps[uid].photos && S.apps[uid].photos[idx]){ S.apps[uid].photos.splice(idx,1); }
+    } else if(itemKey.indexOf('-') > 0){
+      if(S.actPhotos && S.actPhotos[itemKey] && S.actPhotos[itemKey][idx]){ S.actPhotos[itemKey].splice(idx,1); }
+    } else {
+      if(S.notes[itemKey] && S.notes[itemKey].photos && S.notes[itemKey].photos[idx]){ S.notes[itemKey].photos.splice(idx,1); }
+    }
+    setLastMod(itemKey, room ? room.nick || '' : '', Date.now());
+    markDirty(itemKey);
+    save();
+    toast('已从本地移除（Storage 里原文件未删，如需清理请在 Supabase Dashboard 操作）');
+  }
+
+  function photosOf(itemKey){
+    if(itemKey.indexOf('app:') === 0){
+      var a = S.apps[itemKey.slice(4)]; return (a && a.photos) || [];
+    }
+    if(itemKey.indexOf('-') > 0){
+      return (S.actPhotos && S.actPhotos[itemKey]) || [];
+    }
+    var n = S.notes[itemKey] || {}; return n.photos || [];
+  }
+
+  function phaseLabel(ph){ return ph === 'after' ? '复验后' : '整改前'; }
+  function photosHtml(itemKey, phaseFilter){
+    var list = photosOf(itemKey);
+    if(!list.length) return '';
+    return '<div class="pstrip">' + list.map(function(p,i){
+      if(phaseFilter && p.ph !== phaseFilter) return '';
+      return '<button type="button" class="pthumb" data-key="' + itemKey + '" data-i="' + i + '" aria-label="查看照片"><img loading="lazy" src="' + storageThumbUrl(p.p) + '" alt="photo"></button>';
+    }).join('') + '</div>';
+  }
+
+  async function handlePhotoUpload(itemKey, phase, fileList){
+    if(!room){ toast('请先创建/加入房间再上传照片'); return; }
+    if(!navigator.onLine){
+      try{
+        var blob = await compressImage(fileList[0]);
+        var dataUrl = await fileToDataURL(blob);
+        offlineEnqueue(itemKey, phase, dataUrl, fileList[0].name);
+      } catch(e){ toast('离线暂存失败：' + (e.message || e)); }
+      return;
+    }
+    try{
+      var blob2 = await compressImage(fileList[0]);
+      var res = await uploadPhoto(blob2);
+      if(res){
+        appendPhotoToItem(itemKey, phase, res);
+        toast('照片已上传');
+        refreshAllFromState();
+      }
+    } catch(e){
+      if(e.status === 403 || e.status === 401){ toast('上传被拒绝（HTTP ' + e.status + '）：请确认 Storage bucket 策略已执行 SQL'); }
+      else if(e.status === 404){ toast('上传失败（404）：请确认 bucket 名 `' + STORAGE_BUCKET + '` 已创建'); }
+      else if(e.message && e.message.indexOf('文件过大') >= 0){ toast(e.message); }
+      else { toast('上传失败：' + (e.status ? 'HTTP ' + e.status : (e.message || e)) + '，已离线暂存');
+        try{ var blob3 = await compressImage(fileList[0]); var dataUrl3 = await fileToDataURL(blob3); offlineEnqueue(itemKey, phase, dataUrl3, fileList[0].name); } catch(_){}
+      }
+    }
+  }
+
+  /* ---------- 全屏图片 Gallery ---------- */
+  var galleryState = {k:'', i:0};
+  function openGallery(key, i){
+    var list = photosOf(key);
+    if(!list.length) return;
+    galleryState = {k:key, i:Math.max(0, Math.min(i, list.length-1))};
+    renderGallery();
+    $('#gallery').classList.add('on');
+    lock(true);
+  }
+  function closeGallery(){ $('#gallery').classList.remove('on'); lock(false); galleryState = {k:'', i:0}; }
+  function galleryNav(delta){
+    var list = photosOf(galleryState.k);
+    if(!list.length) return;
+    galleryState.i = (galleryState.i + delta + list.length) % list.length;
+    renderGallery();
+  }
+  function renderGallery(){
+    var list = photosOf(galleryState.k);
+    var g = $('#gallery'); if(!g) return;
+    if(!list.length){ closeGallery(); return; }
+    var p = list[galleryState.i];
+    g.querySelector('#gImg').src = storagePublicUrl(p.p);
+    g.querySelector('#gMeta').textContent = (galleryState.i+1) + '/' + list.length + ' · ' + phaseLabel(p.ph) + (p.t ? ' · ' + fmtTimeAgo(p.t) : '');
+    g.querySelector('#gDel').hidden = false;
+    var img = g.querySelector('#gImg');
+    img.onerror = function(){ toast('图片加载失败（可能是 bucket 策略未生效）'); };
+  }
+  function galleryDelete(){
+    showConfirm('删除这张照片？', '只能从本地 note 移除，Storage 里原文件不会自动删除（请在 Supabase Dashboard 清理）', '删除', function(){
+      removePhotoFromItem(galleryState.k, galleryState.i);
+      closeGallery(); refreshAllFromState();
+    });
+  }
+
+  /* ---------- 复验 ---------- */
+  var revKey = '', revResultSel = 'pass', revRmkVal = '';
+  function openRevSheet(key){
+    revKey = key; revResultSel = 'pass'; revRmkVal = '';
+    var existing = S.notes[key] && S.notes[key].rev;
+    if(existing){ revResultSel = existing.result || 'pass'; revRmkVal = existing.rmk || ''; }
+    openSheet('revSheet');
+    setTimeout(function(){
+      $('#revKeyLabel').textContent = '复验：' + (key.charAt(0) === 'v' ? '验房 ' + key : key.charAt(0) === 'a' ? '装修验收 ' + key : key);
+      $('#revResult').value = revResultSel;
+      $('#revRmk').value = revRmkVal;
+    }, 0);
+  }
+  function saveRev(){
+    var result = ($('#revResult').value || 'pass').trim();
+    var rmk = ($('#revRmk').value || '').trim();
+    S.notes[revKey] = S.notes[revKey] || {};
+    S.notes[revKey].rev = { by: (room && room.nick) || '', at: Date.now(), result: result, rmk: rmk };
+    // 通过 → 转为已完成并清整改位
+    if(result === 'pass'){
+      S.items[revKey] = 'd';
+      markDirty(revKey);
+    }
+    setLastMod(revKey, room ? room.nick || '' : '', Date.now());
+    markDirty(revKey); save(); closeSheets(); refreshAllFromState();
+    toast(result === 'pass' ? '已复验通过，状态改为已完成' : '已复验不通过');
+  }
+
+  /* ---------- 优先级整改单（A→B→C） ---------- */
+  function priorityCSV(){
+    var list = getProblems();
+    list.sort(function(x,y){
+      function sv(p){ var s = (S.notes[p.id] && S.notes[p.id].sev) || 'C'; return s === 'A' ? 0 : s === 'B' ? 1 : 2; }
+      return sv(x) - sv(y);
+    });
+    if(!list.length){ toast('暂无待整改项'); return; }
+    var rows = [['优先级','编号','条目','位置','问题描述','严重度','整改期限','整改前照片数','复验后照片数','备注']];
+    list.forEach(function(p){
+      var n = S.notes[p.id] || {};
+      var phs = photosOf(p.id);
+      var before = phs.filter(function(x){ return x.ph !== 'after'; }).length;
+      var after = phs.filter(function(x){ return x.ph === 'after'; }).length;
+      rows.push([(n.sev||'C'), p.idx, (p.module||'') + ' / ' + (p.g||'') + ' / ' + p.t, n.loc||'', n.rmk||'', n.sev||'C', n.due||'', before, after, n.rmk||'']);
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = '优先级整改单_' + todayStr().replace(/\./g,'') + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
+    toast('已导出优先级整改单（A→B→C）');
+  }
+
   function markDirty(id){
     if(!CLOUD_ON || !room) return;
     dirty[id] = true;
@@ -2036,7 +2549,11 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     if(id.indexOf('-') > 0){
       var rmk = S.actNotes[id] || '';
-      return {status: S.acts[id] ? 'd' : 'n', note: rmk ? {rmk: rmk} : {}};
+      var phs = (S.actPhotos && S.actPhotos[id]) || [];
+      var n = {};
+      if(rmk) n.rmk = rmk;
+      if(phs.length) n.photos = phs;
+      return {status: S.acts[id] ? 'd' : 'n', note: Object.keys(n).length ? n : {}};
     }
     if(id.charAt(0) === 's'){
       var rmk2 = S.stageNotes[id] || '';
@@ -2064,12 +2581,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
           w: an.w||'', dep: an.dep||'', h: an.h||'', qty: an.qty||1, loc: an.loc||'',
           points: an.points||[], rmk: an.rmk||'', st: st, ts: old ? old.ts : Date.now(),
           price: an.price || '', buyDate: an.buyDate || '', buyChannel: an.buyChannel || '',
-          paid: !!an.paid, estCost: an.estCost || ''};
+          paid: !!an.paid, estCost: an.estCost || '',
+          photos: Array.isArray(an.photos) ? an.photos.slice() : []};
       }
     } else if(id.indexOf('-') > 0){
       if(st === 'd') S.acts[id] = true; else delete S.acts[id];
       var an2 = row.note || {};
       if(an2.rmk) S.actNotes[id] = an2.rmk; else delete S.actNotes[id];
+      S.actPhotos = S.actPhotos || {};
+      if(Array.isArray(an2.photos) && an2.photos.length) S.actPhotos[id] = an2.photos.slice();
+      else delete S.actPhotos[id];
     } else if(id.charAt(0) === 's'){
       if(st === 'n') delete S.stages[id]; else S.stages[id] = st;
       var an3 = row.note || {};
@@ -2077,9 +2598,12 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     } else {
       if(st === 'n') delete S.items[id]; else S.items[id] = st;
       var n = row.note || {};
-      var hasNote = n.loc || n.qty || n.due || n.rmk;
-      if(hasNote) S.notes[id] = {loc: n.loc || '', qty: n.qty || '', due: n.due || '', rmk: n.rmk || ''};
-      else delete S.notes[id];
+      var hasNote = n.loc || n.qty || n.due || n.rmk || (n.photos && n.photos.length) || n.sev || n.rev;
+      if(hasNote){
+        S.notes[id] = {loc: n.loc || '', qty: n.qty || '', due: n.due || '', rmk: n.rmk || '',
+          photos: Array.isArray(n.photos) ? n.photos.slice() : [],
+          sev: n.sev || 'C', rev: n.rev || null};
+      } else delete S.notes[id];
     }
     if(row.updated_at || row.updated_by) S.lastMod[id] = {by: row.updated_by || '', at: new Date(row.updated_at).getTime()};
   }
@@ -2162,7 +2686,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       })
       .catch(function(e){ syncing = false; syncFail(e); });
   }
-  function syncCycle(){ pushNow(); pullNow(); }
+  function syncCycle(){ pushNow(); pullNow(); setTimeout(processPhotoQueue, 500); }
   function startPolling(){
     stopPolling();
     pollTimer = setInterval(function(){
@@ -2172,9 +2696,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
   function stopPolling(){ clearInterval(pollTimer); pollTimer = 0; }
   document.addEventListener('visibilitychange', function(){
-    if(!document.hidden && CLOUD_ON && room) syncCycle();
+    if(!document.hidden && CLOUD_ON && room){ syncCycle(); processPhotoQueue(); }
   });
-  window.addEventListener('online', function(){ if(CLOUD_ON && room) syncCycle(); });
+  window.addEventListener('online', function(){ if(CLOUD_ON && room){ syncCycle(); processPhotoQueue(); } });
 
   function genCode(){
     var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '', i;
@@ -2282,7 +2806,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         localStorage.removeItem(KEY);
         meta.seen = {}; dirty = {}; saveMeta();
         // 本本地也要清空扩展字段
-        S.actNotes = {}; S.stageNotes = {}; S.lastMod = {};
+        S.actNotes = {}; S.stageNotes = {}; S.lastMod = {}; S.actPhotos = {}; S.photoQueue = [];
         location.reload();
       })
       .catch(function(){
@@ -2330,5 +2854,47 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ refreshItem(it.id); }); }); });
 })();
 </script>
+
+<!-- 复验 sheet -->
+<div class="sheet" id="revSheet">
+  <div class="sheet-panel">
+    <div class="sh-head">
+      <h2 id="revKeyLabel">复验</h2>
+      <button class="iconbtn" id="closeRev" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="sh-body">
+      <label class="rfield"><span>复验结果</span>
+        <select id="revResult" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+          <option value="pass">通过（状态自动改为已完成）</option>
+          <option value="fail">不通过（保留整改状态）</option>
+        </select>
+      </label>
+      <label class="rfield"><span>复验备注（复验人+时间自动记录）</span>
+        <textarea id="revRmk" maxlength="80" placeholder="如：已重新刷漆，无色差" style="width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:8px 10px;font-size:14px;resize:vertical"></textarea>
+      </label>
+      <div class="rbtns" style="margin-top:14px">
+        <button class="sbtn" id="revCancel">取消</button>
+        <button class="sbtn pri" id="revSave">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 全屏图片 Gallery -->
+<div id="gallery" role="dialog" aria-hidden="true">
+  <button class="gclose" id="gClose" aria-label="关闭">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+  </button>
+  <button class="gnav gprev" id="gPrev" aria-label="上一张">‹</button>
+  <button class="gnav gnext" id="gNext" aria-label="下一张">›</button>
+  <img id="gImg" alt="photo">
+  <div class="gmeta">
+    <span id="gMeta">0/0</span>
+    <button type="button" class="gdel" id="gDel">删除</button>
+  </div>
+</div>
+
 </body>
 </html>
