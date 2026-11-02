@@ -304,6 +304,29 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .sbtn{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13.5px;font-weight:600}
 .sbtn.pri{background:var(--ink);border-color:var(--ink);color:var(--inkText)}
 #menuRoom[hidden]{display:none!important}
+
+/* ---------- 家电清单 ---------- */
+.appbar{display:flex;gap:8px;margin:0 14px 10px}
+.appbar .sbtn{flex:1}
+.appc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;margin:0 14px 10px;cursor:pointer}
+.appc .arow1{display:flex;align-items:center;gap:8px;min-height:28px}
+.appc .aname{font-size:15px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.appc .adim{font-size:12.5px;color:var(--text);margin-top:5px}
+.appc .ameta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.appc .ptags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.appc .ptags i{font-style:normal;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:var(--muted)}
+.appc .armk{font-size:12px;color:var(--muted);margin-top:5px;border-top:1px dashed var(--line);padding-top:5px}
+.badge.t{background:var(--gray-bg);color:var(--muted)}
+.apgrid{display:flex;gap:8px}
+.apgrid .rfield{flex:1;min-width:0}
+.pts{display:flex;flex-wrap:wrap;gap:8px}
+.pts button{height:38px;padding:0 14px;border-radius:19px;border:1px solid var(--line);background:var(--card2);font-size:13px;color:var(--text)}
+.pts button.on{background:var(--ink);color:var(--inkText);border-color:var(--ink)}
+.aphint{margin:8px 14px 0;font-size:11.5px;line-height:1.6;color:var(--muted);background:var(--card2);border-radius:8px;padding:8px 10px}
+.apsort.on{background:var(--ink);color:var(--inkText);border-color:var(--ink)}
+.apempty{margin:24px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:2}
+.sbtn.danger-text{color:var(--red)}
+@media print{ .appbar,#apFilters,#apSheet{display:none!important} .appc{cursor:default} }
 @media print{ #syncBar{display:none!important} }
 </style>
 </head>
@@ -334,6 +357,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <button data-tab="v">验房 <i>112</i></button>
       <button data-tab="a">装修验收 <i>68</i></button>
       <button data-tab="s">排期 <i>25</i></button>
+      <button data-tab="ap">家电 <i id="apCountTop">0</i></button>
     </nav>
     <div id="syncBar" role="button" aria-label="云同步设置">
       <span class="dot"></span><span class="scode"></span><span class="smsg"></span>
@@ -354,6 +378,10 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
     <button class="navbtn" data-tab="s">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8 14h2M14 14h2"/></svg>
       <span>排期</span>
+    </button>
+    <button class="navbtn" data-tab="ap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 10h14"/><path d="M8 6.5h2M8 14h2"/></svg>
+      <span>家电</span>
     </button>
   </nav>
 
@@ -439,6 +467,46 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
     </div>
   </div>
 
+  <div class="sheet" id="appSheet">
+    <div class="sheet-panel">
+      <div class="sh-head">
+        <h2 id="appTitle">新增家电</h2>
+        <button class="iconbtn" id="closeApp" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <div class="sh-body">
+        <label class="rfield"><span>电器名称</span><select id="apName" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px"></select></label>
+        <label class="rfield" id="apCustomWrap" hidden><span>自定义名称</span><input id="apCustom" type="text" maxlength="20" placeholder="如：咖啡机"></label>
+        <div class="aphint" id="apHint" hidden></div>
+        <div class="apgrid">
+          <label class="rfield"><span>品牌</span><input id="apBrand" type="text" maxlength="20" placeholder="如：海尔"></label>
+          <label class="rfield"><span>型号</span><input id="apModel" type="text" maxlength="30" placeholder="如：BCD-501"></label>
+        </div>
+        <div class="apgrid">
+          <label class="rfield"><span>宽 mm</span><input id="apW" type="text" inputmode="numeric" maxlength="5" placeholder="宽"></label>
+          <label class="rfield"><span>深 mm</span><input id="apD" type="text" inputmode="numeric" maxlength="5" placeholder="深"></label>
+          <label class="rfield"><span>高 mm</span><input id="apH" type="text" inputmode="numeric" maxlength="5" placeholder="高"></label>
+        </div>
+        <div class="apgrid">
+          <label class="rfield"><span>数量</span><input id="apQty" type="text" inputmode="numeric" maxlength="3" value="1"></label>
+          <label class="rfield"><span>放置位置</span><input id="apLoc" type="text" maxlength="20" placeholder="如：厨房西侧 / 主卫"></label>
+        </div>
+        <div class="rfield"><span>需要的点位（多选）</span><div class="pts" id="apPoints"></div></div>
+        <div class="rfield"><span>状态</span><div id="apStatus" style="display:flex;gap:8px">
+          <button data-v="t" type="button" style="flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2)">待定</button>
+          <button data-v="p" type="button" style="flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2)">已定</button>
+          <button data-v="d" type="button" style="flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2)">已安装</button>
+        </div></div>
+        <label class="rfield"><span>备注</span><input id="apRmk" type="text" maxlength="60" placeholder="如：需 16A 插座 / 柜体开孔尺寸另算"></label>
+        <div class="rbtns" style="margin-bottom:14px">
+          <button class="sbtn danger-text" id="apDelete" hidden>删除</button>
+          <button class="sbtn pri" id="apSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -488,21 +556,24 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
   /* ---------- 状态 ---------- */
   function blank(){
-    return {items:{},notes:{},stages:{},acts:{},
-      ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true}}};
+    return {items:{},notes:{},stages:{},acts:{},apps:{},
+      ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true},appFilter:'all',appSort:false}};
   }
   var S;
   try{ S = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ S = null; }
   var B = blank();
   S = Object.assign({}, B, S || {});
   S.items = S.items || {}; S.notes = S.notes || {}; S.stages = S.stages || {}; S.acts = S.acts || {};
+  S.apps = S.apps || {};
+  S.ui.appFilter = S.ui.appFilter || 'all';
+  S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
   S.ui.filters = Object.assign({}, B.ui.filters, S.ui.filters || {});
   S.ui.collapsed = S.ui.collapsed || {};
   S.ui.openItems = S.ui.openItems || {};
   S.ui.openStages = S.ui.openStages || {};
   if(S.ui.openStages.s1 === undefined) S.ui.openStages.s1 = true;
-  if(MODS.indexOf(S.ui.tab) < 0 && S.ui.tab !== 's') S.ui.tab = 'v';
+  if(MODS.indexOf(S.ui.tab) < 0 && S.ui.tab !== 's' && S.ui.tab !== 'ap') S.ui.tab = 'v';
 
   var saveTimer = 0;
   function save(){
@@ -634,7 +705,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     '</section>';
   }
 
-  $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView();
+  $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView() + applianceView();
 
   /* ---------- 进度 ---------- */
   function groupStats(mod){
@@ -829,6 +900,215 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     markDirty(s.id);
     save();
     updateSchedule();
+  }
+
+  /* ---------- 家电清单 ---------- */
+  var APP_PRESETS = [
+    {n:'冰箱', hint:'参考尺寸区间：宽 600–910 · 深 600–750 · 高 1700–2000 mm（单门小冰箱更小，对开门更大，以具体型号为准）'},
+    {n:'洗衣机', hint:'参考尺寸区间：宽 595–600 · 深 550–650 · 高 850 mm（滚筒主流值）'},
+    {n:'烘干机', hint:'参考尺寸区间：宽 595–600 · 深 600–650 · 高 850 mm；叠放需加连接件高度约 30–50 mm'},
+    {n:'洗碗机', hint:'参考尺寸区间：嵌入式 宽 598 · 深 550–600 · 高 775–815 mm；独立式宽约 600 mm'},
+    {n:'油烟机', hint:'参考尺寸区间：宽 750–900 · 深 500–550 mm（侧吸/顶吸差异大，以型号为准）'},
+    {n:'燃气灶', hint:'参考开孔尺寸：宽 650–710 · 深 350–400 mm（常见双眼灶，开孔尺寸以说明书为准）'},
+    {n:'嵌入式烤箱', hint:'参考尺寸区间：宽 595 · 深 550–570 · 高 595 mm（60cm 标准柜）'},
+    {n:'微波炉', hint:'参考尺寸区间：宽 480–550 · 深 300–400 · 高 280–330 mm'},
+    {n:'电视', hint:'参考整机宽度：55 寸约 1230 · 65 寸约 1450 · 75 寸约 1670 mm；挂墙需确认墙体承重'},
+    {n:'空调室内机', hint:'参考尺寸区间：挂机 宽 800–1100 · 深 200–330 · 高 290–360 mm（1–1.5 匹）'},
+    {n:'空调室外机', hint:'参考尺寸区间：宽 800–950 · 深 300–400 · 高 550–750 mm；需预留散热与检修空间'},
+    {n:'热水器', hint:'参考：燃气式 宽 340–370 · 高 530–600 mm；电储水式直径 400–500 mm（圆桶，按容量变化大）'},
+    {n:'新风主机', hint:'参考尺寸区间：宽 900–1200 · 深 600–800 · 高 220–280 mm（吊顶式，另需检修口）'},
+    {n:'投影', hint:'参考尺寸区间：宽 300–400 · 深 250–350 · 高 100–180 mm；注意投射距离与电源点位'},
+    {n:'洗衣机柜', hint:'参考尺寸区间：宽 600–700 · 深 600–650 · 高 900–950 mm（含台盆另计）'}
+  ];
+  var APP_POINTS = ['插座','进水','排水','燃气','网口'];
+  var APP_ST = {t:'待定', p:'已定', d:'已安装'};
+  var editingUid = null, apSt = 't', apPts = [];
+
+  function applianceView(){
+    return '<section class="view' + (S.ui.tab==='ap'?' on':'') + '" data-tab="ap">' +
+      '<div class="print-head"><h2>家电清单</h2><p>尺寸决定水电点位与柜体留空 · 登记人＿＿＿＿　日期＿＿＿＿</p></div>' +
+      '<div class="mcard">' +
+        '<div class="mhead"><div><h2>家电清单</h2><p class="msub">品牌 · 型号 · 尺寸 · 点位，影响水电定位与柜体留空</p></div>' +
+          '<div class="mnum"><b id="num-ap">0</b>台</div></div>' +
+        '<div class="mstats" id="stats-ap"></div>' +
+        '<div class="filters" id="apFilters">' +
+          '<button data-f="all" class="on">全部 <i>0</i></button>' +
+          '<button data-f="t">待定 <i>0</i></button>' +
+          '<button data-f="p">已定 <i>0</i></button>' +
+          '<button data-f="d">已安装 <i>0</i></button>' +
+          '<button class="apsort" id="apSortBtn">按位置排序</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="appbar">' +
+        '<button class="sbtn pri" id="apAdd">＋ 新增家电</button>' +
+        '<button class="sbtn" id="apCsv">导出 CSV</button>' +
+      '</div>' +
+      '<div id="apList"></div>' +
+    '</section>';
+  }
+
+  function appNote(a){
+    return {name:a.name, brand:a.brand||'', model:a.model||'', w:a.w||'', dep:a.dep||'', h:a.h||'',
+      qty:a.qty||1, loc:a.loc||'', points:a.points||[], rmk:a.rmk||''};
+  }
+  function appCardHTML(uid, a){
+    var dims = (a.w||a.dep||a.h) ? (a.w||'?') + ' × ' + (a.dep||'?') + ' × ' + (a.h||'?') + ' mm' : '';
+    var meta = [];
+    if(a.brand || a.model) meta.push(esc((a.brand||'') + (a.brand&&a.model?' · ':'') + (a.model||'')));
+    meta.push('×' + (a.qty||1));
+    if(a.loc) meta.push(esc(a.loc));
+    return '<div class="appc" data-uid="' + uid + '" role="button">' +
+      '<div class="arow1"><span class="aname">' + esc(a.name) + '</span>' +
+        '<span class="badge ' + a.st + '">' + APP_ST[a.st] + '</span></div>' +
+      (dims ? '<div class="adim">尺寸：' + esc(dims) + '（宽×深×高）</div>' : '') +
+      '<div class="ameta">' + meta.join('　·　') + '</div>' +
+      (a.points && a.points.length ? '<div class="ptags">' + a.points.map(function(p){ return '<i>' + esc(p) + '</i>'; }).join('') + '</div>' : '') +
+      (a.rmk ? '<div class="armk">' + esc(a.rmk) + '</div>' : '') +
+    '</div>';
+  }
+  function renderApps(){
+    var uids = Object.keys(S.apps);
+    var cnt = {all:uids.length, t:0, p:0, d:0};
+    uids.forEach(function(u){ var st = S.apps[u].st; if(cnt[st] !== undefined) cnt[st]++; });
+    $('#num-ap').textContent = cnt.all;
+    $('#apCountTop').textContent = cnt.all;
+    $('#stats-ap').innerHTML = '待定 <b>' + cnt.t + '</b> · 已定 <b>' + cnt.p + '</b> · 已安装 <b>' + cnt.d + '</b>';
+    $$('#apFilters button[data-f]').forEach(function(b){
+      b.querySelector('i').textContent = cnt[b.dataset.f];
+      b.classList.toggle('on', S.ui.appFilter === b.dataset.f);
+    });
+    $('#apSortBtn').classList.toggle('on', !!S.ui.appSort);
+    var f = S.ui.appFilter || 'all';
+    var list = uids.filter(function(u){ return f === 'all' || S.apps[u].st === f; });
+    if(S.ui.appSort){
+      list.sort(function(x,y){
+        var lx = S.apps[x].loc || '￿', ly = S.apps[y].loc || '￿';
+        return lx.localeCompare(ly, 'zh');
+      });
+    } else {
+      list.sort(function(x,y){ return (S.apps[x].ts||0) - (S.apps[y].ts||0); });
+    }
+    $('#apList').innerHTML = list.length
+      ? list.map(function(u){ return appCardHTML(u, S.apps[u]); }).join('')
+      : '<div class="apempty">' + (uids.length ? '该状态下暂无家电' : '还没有登记家电<br>点上方「＋ 新增家电」开始') + '</div>';
+  }
+
+  function initAppEditor(){
+    $('#apName').innerHTML = APP_PRESETS.map(function(p,i){ return '<option value="' + i + '">' + esc(p.n) + '</option>'; }).join('') +
+      '<option value="-1">自定义…</option>';
+    $('#apPoints').innerHTML = APP_POINTS.map(function(p){ return '<button type="button" data-p="' + p + '">' + p + '</button>'; }).join('');
+  }
+  function updateApHint(){
+    var v = $('#apName').value;
+    var hint = $('#apHint');
+    if(v === '-1'){ hint.hidden = true; $('#apCustomWrap').hidden = false; }
+    else {
+      $('#apCustomWrap').hidden = true;
+      hint.hidden = false;
+      hint.textContent = APP_PRESETS[+v].hint;
+    }
+  }
+  function setApSt(v){
+    apSt = v;
+    $$('#apStatus button').forEach(function(b){
+      var on = b.dataset.v === v;
+      b.style.background = on ? 'var(--ink)' : 'var(--card2)';
+      b.style.color = on ? 'var(--inkText)' : 'var(--text)';
+      b.style.borderColor = on ? 'var(--ink)' : 'var(--line)';
+    });
+  }
+  function openAppEditor(uid){
+    editingUid = uid || null;
+    var a = uid ? S.apps[uid] : null;
+    $('#appTitle').textContent = a ? '编辑家电' : '新增家电';
+    $('#apDelete').hidden = !a;
+    var presetIdx = 0;
+    if(a){
+      presetIdx = -1;
+      APP_PRESETS.forEach(function(p,i){ if(p.n === a.name) presetIdx = i; });
+    }
+    $('#apName').value = String(presetIdx < 0 ? (a ? -1 : 0) : presetIdx);
+    updateApHint();
+    $('#apCustom').value = (a && presetIdx < 0) ? a.name : '';
+    $('#apBrand').value = a ? (a.brand||'') : '';
+    $('#apModel').value = a ? (a.model||'') : '';
+    $('#apW').value = a ? (a.w||'') : '';
+    $('#apD').value = a ? (a.dep||'') : '';
+    $('#apH').value = a ? (a.h||'') : '';
+    $('#apQty').value = a ? (a.qty||1) : 1;
+    $('#apLoc').value = a ? (a.loc||'') : '';
+    $('#apRmk').value = a ? (a.rmk||'') : '';
+    apPts = a ? (a.points||[]).slice() : [];
+    $$('#apPoints button').forEach(function(b){ b.classList.toggle('on', apPts.indexOf(b.dataset.p) >= 0); });
+    setApSt(a ? a.st : 't');
+    openSheet('appSheet');
+  }
+  function saveApp(){
+    var name = $('#apName').value === '-1' ? $('#apCustom').value.trim() : APP_PRESETS[+$('#apName').value].n;
+    if(!name){ toast('请填写电器名称'); return; }
+    var uid = editingUid || ('u' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36));
+    var old = S.apps[uid];
+    S.apps[uid] = {
+      name: name,
+      brand: $('#apBrand').value.trim(),
+      model: $('#apModel').value.trim(),
+      w: $('#apW').value.trim(),
+      dep: $('#apD').value.trim(),
+      h: $('#apH').value.trim(),
+      qty: Math.max(1, parseInt($('#apQty').value, 10) || 1),
+      loc: $('#apLoc').value.trim(),
+      points: apPts.slice(),
+      rmk: $('#apRmk').value.trim(),
+      st: apSt,
+      ts: old ? old.ts : Date.now()
+    };
+    markDirty('app:' + uid);
+    save();
+    closeSheets();
+    renderApps();
+    toast(editingUid ? '已保存修改' : '已添加 ' + name);
+  }
+  var pendingConfirm = null;
+  function showConfirm(title, text, btn, action){
+    pendingConfirm = action || null;
+    $('#confirmDlg h3').textContent = title;
+    $('#confirmDlg p').textContent = text;
+    $('#doReset').textContent = btn;
+    closeSheets();
+    $('#confirmDlg').classList.add('on');
+    lock(true);
+  }
+  function askDeleteApp(){
+    if(!editingUid) return;
+    var name = S.apps[editingUid] ? S.apps[editingUid].name : '';
+    var uid = editingUid;
+    showConfirm('删除「' + name + '」？', '删除后不可恢复（云端同步的房间也会同步删除）。', '确认删除', function(){
+      delete S.apps[uid];
+      markDirty('app:' + uid);
+      save();
+      renderApps();
+      toast('已删除');
+    });
+  }
+  function exportAppsCsv(){
+    var uids = Object.keys(S.apps);
+    if(!uids.length){ toast('暂无家电记录'); return; }
+    var rows = [['电器','品牌','型号','宽mm','深mm','高mm','数量','位置','点位','状态','备注']];
+    uids.forEach(function(u){
+      var a = S.apps[u];
+      rows.push([a.name, a.brand||'', a.model||'', a.w||'', a.dep||'', a.h||'', a.qty||1,
+        a.loc||'', (a.points||[]).join('/'), APP_ST[a.st]||'', a.rmk||'']);
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '家电清单_' + todayStr().replace(/\./g,'') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
+    toast('已导出 CSV');
   }
 
   /* ---------- Tab ---------- */
@@ -1028,7 +1308,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
 
     var filterBtn = t.closest('.filters button');
-    if(filterBtn){
+    if(filterBtn && filterBtn.closest('.filters').dataset.m){
       var fm = filterBtn.closest('.filters').dataset.m;
       S.ui.filters[fm] = filterBtn.dataset.f;
       save();
@@ -1111,6 +1391,25 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         .catch(function(e){ setSyncUI('err', errHint(e) + ' · 本地模式继续可用'); toast(errHint(e)); });
       return;
     }
+    if(t.closest('#apAdd')){ openAppEditor(null); return; }
+    if(t.closest('#apCsv')){ exportAppsCsv(); return; }
+    if(t.closest('#closeApp')){ closeSheets(); return; }
+    if(t.closest('#apSave')){ saveApp(); return; }
+    if(t.closest('#apDelete')){ askDeleteApp(); return; }
+    var apCard = t.closest('.appc');
+    if(apCard){ openAppEditor(apCard.dataset.uid); return; }
+    var apf = t.closest('#apFilters button[data-f]');
+    if(apf){ S.ui.appFilter = apf.dataset.f; save(); renderApps(); return; }
+    if(t.closest('#apSortBtn')){ S.ui.appSort = !S.ui.appSort; save(); renderApps(); return; }
+    var pt = t.closest('#apPoints button');
+    if(pt){
+      var i = apPts.indexOf(pt.dataset.p);
+      if(i >= 0) apPts.splice(i,1); else apPts.push(pt.dataset.p);
+      pt.classList.toggle('on');
+      return;
+    }
+    var pst = t.closest('#apStatus button');
+    if(pst){ setApSt(pst.dataset.v); return; }
     if(t.closest('#btnSyncNow')){ syncCycle(); toast('正在同步…'); return; }
     if(t.closest('#btnCopyLink') || t.closest('#roomCodeBig')){
       if(room) copyText(roomLink(), '邀请链接已复制，发给家人即可加入');
@@ -1131,18 +1430,23 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       return;
     }
     if(t.closest('#menuReset')){
-      closeSheets();
-      $('#confirmDlg').classList.add('on');
-      lock(true);
+      showConfirm('清空全部记录？',
+        '所有勾选状态、整改备注、排期进度和家电清单都会被清除，且无法恢复。建议先导出 CSV 备份。',
+        '确认清空', null);
       return;
     }
     if(t.closest('#cancelReset')){
+      pendingConfirm = null;
       $('#confirmDlg').classList.remove('on');
       lock(false);
       return;
     }
     if(t.closest('#doReset')){
-      cloudResetAndReload();
+      var act = pendingConfirm;
+      pendingConfirm = null;
+      $('#confirmDlg').classList.remove('on');
+      lock(false);
+      if(act){ act(); } else { cloudResetAndReload(); }
       return;
     }
 
@@ -1174,6 +1478,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       saveRoom();
       toast('昵称已保存');
     }
+    if(e.target.id === 'apName'){ updateApHint(); }
   });
 
   /* ---------- 云同步（Supabase REST，无 SDK） ---------- */
@@ -1242,12 +1547,28 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
 
   function localRow(id){
+    if(id.indexOf('app:') === 0){
+      var a = S.apps[id.slice(4)];
+      return {status: a ? a.st : 'n', note: a ? appNote(a) : null};
+    }
     if(id.indexOf('-') > 0) return {status: S.acts[id] ? 'd' : 'n', note: null};
     if(id.charAt(0) === 's') return {status: S.stages[id] || 'n', note: null};
     return {status: S.items[id] || 'n', note: S.notes[id] || null};
   }
   function applyRemoteRow(row){
     var id = row.item_id, st = row.status || 'n';
+    if(id.indexOf('app:') === 0){
+      var uid = id.slice(4);
+      if(st === 'n'){ delete S.apps[uid]; }
+      else {
+        var an = row.note || {};
+        var old = S.apps[uid];
+        S.apps[uid] = {name: an.name||'', brand: an.brand||'', model: an.model||'',
+          w: an.w||'', dep: an.dep||'', h: an.h||'', qty: an.qty||1, loc: an.loc||'',
+          points: an.points||[], rmk: an.rmk||'', st: st, ts: old ? old.ts : Date.now()};
+      }
+      return;
+    }
     if(id.indexOf('-') > 0){
       if(st === 'd') S.acts[id] = true; else delete S.acts[id];
     } else if(id.charAt(0) === 's'){
@@ -1276,6 +1597,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     });
     updateProgress();
     updateSchedule();
+    renderApps();
     if($('#sheetProblems').classList.contains('on')) renderProblems();
   }
 
@@ -1331,6 +1653,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         lastSyncAt = Date.now();
         if(changed) refreshAllFromState();
         setSyncUI('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
+        if(Object.keys(dirty).length) pushSoon();
       })
       .catch(function(e){ syncing = false; syncFail(e); });
   }
@@ -1400,14 +1723,23 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         });
         Object.keys(S.stages).forEach(function(sid){ has[sid] = true; up.push({room_id: code, item_id: sid, status: S.stages[sid], note: {}, updated_at: ts, updated_by: room.nick || null}); });
         Object.keys(S.acts).forEach(function(aid){ if(S.acts[aid]){ has[aid] = true; up.push({room_id: code, item_id: aid, status: 'd', note: {}, updated_at: ts, updated_by: room.nick || null}); } });
+        Object.keys(S.apps).forEach(function(uid){
+          has['app:' + uid] = true;
+          var ap = S.apps[uid];
+          up.push({room_id: code, item_id: 'app:' + uid, status: ap.st, note: appNote(ap), updated_at: ts, updated_by: room.nick || null});
+        });
         Object.keys(dirty).forEach(function(id){
           if(has[id]) return;
           var r = localRow(id);
           up.push({room_id: code, item_id: id, status: r.status, note: r.note || {}, updated_at: ts, updated_by: room.nick || null});
         });
         if(!up.length){
-          syncing = false; lastSyncAt = Date.now(); dirty = {}; saveMeta();
-          setSyncUI('ok', '已同步'); startPolling(); return null;
+          syncing = false; lastSyncAt = Date.now();
+          var d0 = dirty; dirty = {}; saveMeta();
+          Object.keys(d0).forEach(function(id){ dirty[id] = true; }); saveMeta();
+          setSyncUI('ok', '已同步'); startPolling();
+          if(Object.keys(dirty).length) pushSoon();
+          return null;
         }
         return api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(up)})
           .then(function(){
@@ -1415,6 +1747,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
             dirty = {}; saveMeta();
             syncing = false; lastSyncAt = Date.now();
             setSyncUI('ok', '已同步'); startPolling();
+            if(Object.keys(dirty).length) pushSoon();
           });
       })
       .catch(function(e){ syncing = false; syncFail(e); startPolling(); });
@@ -1433,6 +1766,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var ids = [];
     MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ ids.push(it.id); }); }); });
     D.schedule.stages.forEach(function(s){ ids.push(s.id); s.acts.forEach(function(a){ ids.push(a.id); }); });
+    Object.keys(S.apps).forEach(function(uid){ ids.push('app:' + uid); });
     var ts = new Date().toISOString();
     var rows = ids.map(function(id){ return {room_id: room.code, item_id: id, status: 'n', note: {}, updated_at: ts, updated_by: room.nick || null}; });
     setSyncUI('warn', '正在清空云端…');
@@ -1474,6 +1808,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   MODS.forEach(function(m){ applyFilter(m); });
   updateProgress();
   updateSchedule();
+  initAppEditor();
+  renderApps();
   switchTab(S.ui.tab);
   MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ refreshItem(it.id); }); }); });
 })();
