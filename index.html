@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6f8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1013">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f9254'/%3E%3Cpath d='M9 16.5l4.2 4.2L23 11.5' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>新房验房与装修管理</title>
+<style>
+:root{
+  --bg:#f5f6f8;--card:#ffffff;--card2:#f7f8fa;--text:#171a1f;--muted:#6e7681;
+  --line:#e3e6ea;--line2:#eef0f3;
+  --green:#1f9254;--green-bg:#e9f6ef;
+  --red:#d33b3b;--red-bg:#fdeeee;
+  --gray:#8b939e;--gray-bg:#f1f2f4;
+  --amber:#a2660c;--amber-bg:#fbf0dc;
+  --ink:#1c2126;--inkText:#ffffff;--ink-soft:#eceef1;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1013;--card:#181b20;--card2:#1d2127;--text:#e9ecf1;--muted:#9aa3ae;
+    --line:#2b3038;--line2:#232830;
+    --green:#4ec98a;--green-bg:#15301f;
+    --red:#ff6b6b;--red-bg:#3a1c1c;
+    --gray:#7d868f;--gray-bg:#242830;
+    --amber:#f0b25e;--amber-bg:#33260f;
+    --ink:#eef1f4;--inkText:#101317;--ink-soft:#252a32;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:15px;line-height:1.45}
+button,input{font-family:inherit;color:inherit;font-size:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+#app{max-width:720px;margin:0 auto}
+body.lock{overflow:hidden}
+
+/* ---------- 顶部 ---------- */
+.top{position:sticky;top:0;z-index:30;background:var(--bg);padding-top:env(safe-area-inset-top);border-bottom:1px solid var(--line)}
+.tbar{display:flex;align-items:center;gap:8px;padding:10px 14px 6px}
+.brand{flex:1;min-width:0}
+.brand h1{font-size:16px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin-top:3px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ring{position:relative;width:44px;height:44px;flex:0 0 44px}
+.ring svg{width:44px;height:44px;transform:rotate(-90deg)}
+.ring .track{stroke:var(--line);stroke-width:4.5;fill:none}
+.ring .fill{stroke:var(--green);stroke-width:4.5;fill:none;stroke-linecap:round;transition:stroke-dashoffset .25s ease}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px;font-weight:600;color:var(--muted)}
+.iconbtn{position:relative;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--text);padding:0;flex:0 0 44px}
+.iconbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.badgecount{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:600;display:grid;place-items:center;line-height:1}
+.badgecount[hidden]{display:none}
+.seg{display:flex;gap:6px;padding:2px 14px 10px}
+.seg button{flex:1;height:44px;border-radius:9px;border:1px solid var(--line);background:var(--card);font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;padding:0 4px}
+.seg button i{font-style:normal;font-size:10.5px;background:var(--card2);padding:1px 5px;border-radius:5px;color:var(--muted)}
+.seg button.on{background:var(--ink);border-color:var(--ink);color:var(--inkText);font-weight:600}
+.seg button.on i{background:rgba(127,127,127,.22);color:inherit}
+
+/* ---------- 主体 ---------- */
+main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
+.view{display:none}
+.view.on{display:block}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+.mhead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.mhead h2{font-size:17px;font-weight:650}
+.msub{margin-top:3px;font-size:11.5px;color:var(--muted)}
+.mnum{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.mnum b{font-size:21px;color:var(--text);font-weight:650;margin-right:1px}
+.pbar{height:7px;background:var(--line2);border-radius:4px;overflow:hidden;margin-top:12px}
+.pbar i{display:block;height:100%;width:0;border-radius:4px;background:var(--green);transition:width .2s ease}
+.mstats{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--muted)}
+.mstats em{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.s-ok em{background:var(--green)}
+.s-fix em{background:var(--red)}
+.s-na em{background:var(--gray)}
+.hint{margin-top:11px;font-size:11.5px;line-height:1.5;color:var(--muted);background:var(--card2);border-radius:8px;padding:8px 10px}
+.filters{display:flex;gap:5px;margin-top:12px;background:var(--card2);padding:4px;border-radius:10px}
+.filters button{flex:1;height:44px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:12.5px;display:flex;gap:4px;align-items:center;justify-content:center;padding:0 2px}
+.filters button i{font-style:normal;font-size:10.5px;opacity:.85;font-variant-numeric:tabular-nums}
+.filters button.on{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.empty-filter{padding:26px 10px;text-align:center;font-size:13px;color:var(--muted)}
+.empty-filter[hidden]{display:none}
+
+/* ---------- 分组与条目 ---------- */
+.gwrap{margin-top:14px}
+.ghead{display:flex;align-items:center;gap:8px;padding:2px 3px 7px;min-height:44px;user-select:none}
+.gt{flex:1;display:flex;align-items:baseline;gap:8px;min-width:0}
+.gname{font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
+.gcount{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.gchev{font-size:11px;color:var(--muted);transition:transform .15s ease}
+.gwrap.collapsed .gchev{transform:rotate(-90deg)}
+.gbar{height:3px;background:var(--line2);border-radius:2px;overflow:hidden;margin:0 3px 8px}
+.gbar i{display:block;height:100%;width:0;background:var(--green);border-radius:2px;transition:width .2s ease}
+.gitems{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.gwrap.collapsed .gitems{display:none}
+.gwrap.hidef{display:none}
+.item{display:flex;gap:8px;padding:11px 10px 12px;background:var(--card);align-items:flex-start;transition:background .15s ease}
+.item+.item{border-top:1px solid var(--line2)}
+.item.hidef{display:none}
+.item.fix{background:var(--red-bg)}
+.item.flash{background:var(--ink-soft)}
+.chk{flex:0 0 44px;width:44px;height:44px;padding:0;margin:-7px 0 0 -5px;border:0;background:none;display:grid;place-items:center}
+.circ{width:24px;height:24px;border-radius:50%;border:1.6px solid #c7ccd4;display:flex;align-items:center;justify-content:center;transition:background .15s ease,border-color .15s ease}
+.circ svg{width:15px;height:15px;stroke:#fff;stroke-width:2.7;fill:none;opacity:0;transition:opacity .15s ease}
+.circ b{display:none;font-size:13px;font-weight:700;color:#fff;line-height:1}
+.item.done .circ{background:var(--green);border-color:var(--green)}
+.item.done .circ svg{opacity:1}
+.item.fix .circ{background:var(--red);border-color:var(--red)}
+.item.fix .circ b{display:block}
+.ibody{flex:1;min-width:0}
+.itop{display:flex;align-items:flex-start;gap:6px}
+.pmark{display:none}
+.ino{font-size:11px;color:var(--muted);min-width:17px;text-align:right;margin-top:2px;font-variant-numeric:tabular-nums}
+.ititle{flex:1;font-size:14.5px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;padding-top:0}
+.item.done .ititle{text-decoration:line-through;color:var(--muted);font-weight:400}
+.rbtn{flex:0 0 auto;height:44px;min-width:46px;margin:-10px -2px -8px 0;padding:0 2px;border:0;background:none;font-size:11.5px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.rbtn span{display:inline-flex;align-items:center;justify-content:center;height:27px;padding:0 9px;border-radius:7px;border:1px solid var(--line);background:var(--card2);white-space:nowrap;transition:all .15s ease}
+.item.fix .rbtn{color:#fff}
+.item.fix .rbtn span{background:var(--red);border-color:var(--red);color:#fff;font-weight:500}
+.istd{margin-top:4px;font-size:12px;line-height:1.55;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.item.open .istd{display:block;-webkit-line-clamp:unset}
+.iextra{display:flex;align-items:center;gap:8px;margin-top:3px;font-size:11px;color:var(--gray)}
+.iextra>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.more{height:44px;margin:-12px -4px -10px 0;padding:0 6px;border:0;background:none;font-size:11px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.item.open .istd{color:var(--text)}
+.note-print{display:none}
+.notes{display:none;flex-direction:column;gap:8px;margin-top:9px;padding-top:9px;border-top:1px dashed rgba(127,127,127,.28)}
+.item.fix .notes{display:flex}
+.nf{display:block;min-width:0}
+.nf>span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.nf input{display:block;width:100%;height:44px;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);padding:0 10px;font-size:14px;outline:none}
+.nf input:focus{border-color:var(--green)}
+.nrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ---------- 排期 ---------- */
+.stages{margin-top:14px}
+.stage{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.shead{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:12px 12px;border:0;background:none;min-height:56px}
+.sno{flex:0 0 24px;height:24px;border-radius:50%;background:var(--card2);border:1px solid var(--line);font-size:12px;display:grid;place-items:center;color:var(--muted);margin-top:1px}
+.smain{flex:1;min-width:0}
+.srow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sname{font-size:15px;font-weight:600}
+.days{font-size:11px;color:var(--muted);background:var(--card2);border-radius:5px;padding:1px 5px}
+.badge{font-size:10.5px;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.badge.n{color:var(--gray);background:var(--gray-bg)}
+.badge.p{color:var(--amber);background:var(--amber-bg)}
+.badge.d{color:var(--green);background:var(--green-bg)}
+.sdesc{margin-top:4px;font-size:11.5px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stage.open .sdesc{display:block}
+.sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto;margin-top:2px}
+.scount{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.schev{font-size:11px;color:var(--muted);transition:transform .15s ease}
+.stage.open .schev{transform:rotate(180deg)}
+.sbody{display:none;padding:0 12px 12px;border-top:1px solid var(--line2);margin-top:0}
+.stage.open .sbody{display:block}
+.kvs{display:flex;flex-direction:column;gap:7px;padding-top:10px}
+.kv{display:flex;gap:9px;font-size:12px;line-height:1.5}
+.kv>span{flex:0 0 84px;color:var(--muted);white-space:nowrap}
+.kv p{flex:1;min-width:0;overflow-wrap:anywhere}
+.kv.pay p{color:var(--amber);font-weight:500}
+.acts{margin-top:11px;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.act{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:11px 10px;border:0;background:var(--card);min-height:48px}
+.act+.act{border-top:1px solid var(--line2)}
+.achk{flex:0 0 20px;height:20px;margin-top:1px;border-radius:5px;border:1.5px solid #c7ccd4;display:grid;place-items:center}
+.achk svg{width:13px;height:13px;stroke:#fff;stroke-width:2.6;fill:none;opacity:0}
+.act.done .achk{background:var(--green);border-color:var(--green)}
+.act.done .achk svg{opacity:1}
+.amain{flex:1;min-width:0}
+.aname{display:block;font-size:13.5px;font-weight:500}
+.act.done .aname{text-decoration:line-through;color:var(--muted);font-weight:400}
+.adesc{display:block;margin-top:2px;font-size:11px;line-height:1.5;color:var(--muted)}
+.adays{flex:0 0 auto;font-size:10.5px;color:var(--muted);margin-top:3px}
+.sstat{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;flex-wrap:wrap}
+.sstat>span{font-size:11.5px;color:var(--muted)}
+.sseg{display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px}
+.sseg button{height:44px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:11.5px;color:var(--muted)}
+.sseg button.on{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.07)}
+
+/* ---------- 底部导航 ---------- */
+#bottomNav{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:720px;z-index:32;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.navbtn{flex:1;height:58px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:11px}
+.navbtn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.navbtn.on{color:var(--text);font-weight:600}
+
+/* ---------- 浮层 ---------- */
+.sheet{position:fixed;inset:0;z-index:50;display:none;background:rgba(0,0,0,.34)}
+.sheet.on{display:block}
+.sheet-panel{position:absolute;inset:0;max-width:720px;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.sh-head{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
+.sh-head h2{flex:1;font-size:16px;font-weight:650}
+.sh-actions{display:flex;gap:8px;padding:2px 14px 10px}
+.sbtn{flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;color:var(--text);display:flex;align-items:center;justify-content:center}
+.sbtn.primary{background:var(--ink);border-color:var(--ink);color:var(--inkText);font-weight:600}
+.sh-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:2px 14px calc(22px + env(safe-area-inset-bottom))}
+.sh-tip{font-size:11.5px;line-height:1.55;color:var(--muted);padding:2px 2px 8px}
+.pgroup{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 6px;margin-bottom:10px}
+.pgh{font-size:13.5px;font-weight:650;padding-bottom:2px}
+.pgh i{font-style:normal;font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
+.pgsub{font-size:11.5px;color:var(--muted);margin:9px 0 2px;padding-top:8px;border-top:1px solid var(--line2)}
+.prow{position:relative;padding:8px 52px 10px 0}
+.prow+.prow{border-top:1px solid var(--line2)}
+.prtop{display:flex;align-items:baseline;gap:6px;font-size:10.5px;color:var(--muted)}
+.prno{font-variant-numeric:tabular-nums}
+.prname{font-size:13.5px;font-weight:500;margin-top:2px;overflow-wrap:anywhere}
+.prnote{margin-top:4px;font-size:11.5px;line-height:1.55;color:var(--muted);overflow-wrap:anywhere}
+.prgo{position:absolute;right:0;top:4px;height:44px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--card2);font-size:11px;color:var(--text)}
+.pempty{padding:46px 10px;text-align:center;font-size:13px;line-height:1.8;color:var(--muted)}
+.pempty span{font-size:11.5px;color:var(--gray)}
+.menu-panel{top:auto;bottom:0;height:auto;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+.mrow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 18px;border:0;border-bottom:1px solid var(--line2);background:var(--card);text-align:left;font-size:14px}
+.mrow.danger{color:var(--red)}
+.mrow:last-child{border-bottom:0}
+.mnote{padding:14px 18px;font-size:11.5px;line-height:1.6;color:var(--muted);background:var(--card)}
+.dialog{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.42);place-items:center;padding:24px}
+.dialog.on{display:grid}
+.dcard{width:100%;max-width:340px;background:var(--card);border-radius:16px;padding:20px 18px;box-shadow:0 12px 40px rgba(0,0,0,.22)}
+.dcard h3{font-size:16px;font-weight:650}
+.dcard p{margin-top:8px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.dbtns{display:flex;gap:9px;margin-top:18px}
+.dbtns button{flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2);font-size:14px}
+.dbtns button.danger{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,10px);z-index:70;background:var(--ink);color:var(--inkText);font-size:12.5px;padding:9px 16px;border-radius:9px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.print-head{display:none}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;color:#000;font-size:10pt}
+  .top,#bottomNav,.filters,.chk,.rbtn,.more,.sseg,.sstat,.gchev,.schev,.achk,.prgo,.toast,#closeProb,#closeMenu,.dialog{display:none!important}
+  .sh-body{overflow:visible!important}
+  main{padding:0}
+  #app{max-width:none}
+  .view:not(.on){display:none!important}
+  .view.on{display:block!important}
+  .print-head{display:block;margin:0 0 12px}
+  .print-head h2{font-size:15pt}
+  .print-head p{font-size:9pt;color:#444;margin-top:4px}
+  .mhead{display:none}
+  .mcard,.stage{border:1px solid #ccc;border-radius:0;box-shadow:none;background:#fff}
+  .pbar,.gbar{display:none}
+  .hint{background:#fff;border:1px solid #ddd;font-size:8.5pt;color:#333}
+  .gitems{border:1px solid #ccc;border-radius:0}
+  .gwrap{margin-top:9px;break-inside:auto}
+  .gwrap.hidef,.gitems.collapsed{display:block!important}
+  .ghead{min-height:0;padding:6px 0 2px}
+  .gname{font-size:11pt}
+  .item{display:block;padding:3px 4px;background:#fff!important;break-inside:avoid;border:0}
+  .item+.item{border-top:1px solid #e2e2e2}
+  .item.hidef{display:block!important}
+  .pmark{display:inline-block;min-width:13px;font-weight:700;font-size:10pt}
+  .item.done .pmark{color:#157a45}
+  .item.fix .pmark{color:#c00}
+  .ino{min-width:0;font-size:8.5pt}
+  .ititle{display:inline;font-size:10pt;font-weight:500}
+  .istd{display:block;-webkit-line-clamp:unset;margin-top:1px;font-size:8.5pt;color:#444;line-height:1.45}
+  .iextra{margin-top:1px;font-size:8pt;color:#666}
+  .item.fix .notes{display:none}
+  .note-print{display:block!important;font-size:8.5pt;color:#b00;margin-top:2px}
+  .sbody{display:block!important}
+  .shead{padding:8px 10px;min-height:0}
+  .stage{margin-bottom:8px;break-inside:avoid}
+  .kv{font-size:8.5pt}
+  .kv>span{flex-basis:62px}
+  .act{min-height:0;padding:5px 8px;background:#fff}
+  .aname{font-size:9pt}
+  .adesc{font-size:8pt}
+  .adays{font-size:8pt}
+  body.printing-problems .top,body.printing-problems main,body.printing-problems #bottomNav{display:none!important}
+  body.printing-problems .sheet{display:block!important;position:static;background:#fff}
+  body.printing-problems .sheet-panel{position:static;background:#fff;height:auto;max-width:none;padding:0}
+  body.printing-problems .sh-head{padding:0 0 8px}
+  body.printing-problems .sh-actions{display:none!important}
+  body.printing-problems #menuSheet,body.printing-problems #confirmDlg{display:none!important}
+  #sheet-problems:not(.on){display:none!important}
+  .prow{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="tbar">
+      <div class="brand">
+        <h1>验房与装修管理</h1>
+        <p id="gstat">已完成 0/180 · 待整改 0</p>
+      </div>
+      <div class="ring">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="track" cx="22" cy="22" r="18.5"></circle>
+          <circle class="fill" id="ringFill" cx="22" cy="22" r="18.5"></circle>
+        </svg>
+        <span id="gpct">0%</span>
+      </div>
+      <button class="iconbtn" id="probBtn" aria-label="问题清单">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5h11l-1.6 3 1.6 3H5"/></svg>
+        <span class="badgecount" id="probCount" hidden>0</span>
+      </button>
+      <button class="iconbtn" id="menuBtn" aria-label="更多">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+    <nav class="seg" id="topTabs">
+      <button data-tab="v">验房 <i>112</i></button>
+      <button data-tab="a">装修验收 <i>68</i></button>
+      <button data-tab="s">排期 <i>25</i></button>
+    </nav>
+  </header>
+
+  <main id="views"></main>
+
+  <nav id="bottomNav">
+    <button class="navbtn" data-tab="v">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M9 3h6v4H9z"/><path d="M8.5 12l2 2 4-4"/></svg>
+      <span>验房</span>
+    </button>
+    <button class="navbtn" data-tab="a">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z"/><path d="M8.8 12l2.2 2.2 4.2-4.2"/></svg>
+      <span>装修验收</span>
+    </button>
+    <button class="navbtn" data-tab="s">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8 14h2M14 14h2"/></svg>
+      <span>排期</span>
+    </button>
+  </nav>
+
+  <div class="sheet" id="sheetProblems">
+    <div class="sheet-panel">
+      <div class="sh-head">
+        <h2 id="probTitle">问题清单</h2>
+        <button class="iconbtn" id="closeProb" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <div class="sh-actions">
+        <button class="sbtn" id="btnCopy">复制文本</button>
+        <button class="sbtn" id="btnCsv">导出 CSV</button>
+        <button class="sbtn" id="btnPrintProb">打印</button>
+      </div>
+      <div class="sh-body">
+        <div class="sh-tip" id="probTip">待整改项汇总，可直接发给施工方或物业。备注可在清单中逐项填写。</div>
+        <div id="probBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="menuSheet">
+    <div class="sheet-panel menu-panel">
+      <div class="sh-head"><h2>更多操作</h2>
+        <button class="iconbtn" id="closeMenu" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <button class="mrow" id="menuPrint">打印当前清单</button>
+      <button class="mrow" id="menuGuide">使用说明</button>
+      <button class="mrow danger" id="menuReset">清空 / 重置全部记录</button>
+      <div class="mnote" id="menuNote">点击圆圈标记完成；长按条目或点「整改」标记待整改。状态与备注仅保存在当前浏览器。</div>
+      <div style="height:8px;background:var(--card)"></div>
+    </div>
+  </div>
+
+  <div class="dialog" id="confirmDlg">
+    <div class="dcard">
+      <h3>清空全部记录？</h3>
+      <p>所有勾选状态、整改备注和排期进度都会被清除，且无法恢复。建议先到问题清单导出 CSV 备份。</p>
+      <div class="dbtns">
+        <button id="cancelReset">取消</button>
+        <button class="danger" id="doReset">确认清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先验房、再签字，所有问题写进书面整改单","groups":[{"title":"一、入户与公共部位","items":[{"t":"入户门外观与成品保护","s":"目测+手摸，门扇、门框表面无划伤、磕碰、凹陷、变形；自然光下色差无明显；保护膜完好。","w":"手电"},{"t":"入户门开合与自闭","s":"连续开启3次，启闭灵活、无异响、无卡阻；门扇开启至90°不自动回弹；关闭后与门框贴合。","w":"无"},{"t":"入户门框安装与填缝","s":"门框垂直度≤2mm/m；门扇与门框缝隙均匀，偏差≤2mm；框墙缝隙发泡胶饱满，内外密封胶连续。","w":"2m靠尺、塞尺"},{"t":"门锁/智能锁","s":"钥匙、指纹、密码各试用3次，识别正常；反锁、天地钩、把手功能有效；锁体安装牢固不晃动。","w":"无"},{"t":"猫眼/门铃","s":"猫眼视野清晰、无遮挡；门铃通电有声，音量可调；猫眼内外镜片无破损。","w":"手电"},{"t":"可视对讲","s":"呼叫物业/户内互通，开锁、监看、报警功能正常；图像清晰，无雪花、无延迟。","w":"无"},{"t":"楼道与公共走道","s":"地面无空鼓、破损，墙面顶面完好；照明、应急照明、疏散指示均能点亮；走道无堆放杂物。","w":"手电"},{"t":"消防设施","s":"消火栓箱内水带、水枪齐全，接口无锈蚀；灭火器压力表在绿区，且在有效期内；箱门可正常开启。","w":"手电"},{"t":"管井/防火门","s":"管井门可锁闭，标识清晰；防火门自闭正常，闭门器有效，门缝无过大。","w":"无"},{"t":"电梯与电梯厅","s":"按钮、楼层显示正常；试乘运行平稳、无异响；平层误差≤±5mm；电梯厅照明完好。","w":"卷尺"},{"t":"单元门/信报箱","s":"单元门禁刷卡/密码可用，闭门器有效；信报箱、快递柜门锁完好，编号清晰。","w":"无"}]},{"title":"二、墙地面与顶面","items":[{"t":"墙面空鼓","s":"小锤逐面敲击，单块空鼓面积≤200cm²，且每自然间不超过2处；踢脚线上方、门窗洞口周边重点检查。","w":"小锤"},{"t":"顶面空鼓","s":"小锤敲击顶棚，单块空鼓面积≤200cm²，每自然间不超过1处；无大面积空鼓、脱落风险。","w":"小锤"},{"t":"墙面裂缝","s":"手电侧光目测，无贯穿裂缝；非贯穿裂缝宽度≤0.3mm、长度≤300mm；结构性斜裂缝立即书面报告。","w":"手电、裂缝尺"},{"t":"地面裂缝","s":"目测+脚踩，无贯穿裂缝、无起壳；表面龟裂宽度≤0.3mm，每自然间不超过2处。","w":"手电"},{"t":"墙面平整度","s":"2m靠尺+楔形塞尺，每面墙测3处（上、中、下），偏差≤3mm；相邻墙面无错台。","w":"2m靠尺、塞尺"},{"t":"地面平整度","s":"2m靠尺+塞尺，每房间测5点，偏差≤4mm；木地板基层≤3mm；无局部凹陷。","w":"2m靠尺、塞尺"},{"t":"顶面平整度","s":"2m靠尺+塞尺，每房间测3处，偏差≤4mm；无下垂、无波浪起伏。","w":"2m靠尺、塞尺"},{"t":"阴阳角方正","s":"直角尺/方尺检查，阴阳角方正偏差≤3mm；角线顺直，无缺损、无毛刺。","w":"直角尺"},{"t":"墙面垂直度","s":"2m托线板/靠尺检查，每面墙测2处，垂直度偏差≤3mm；全高偏差≤10mm。","w":"2m靠尺"},{"t":"地面起砂","s":"目测+手掌擦拭，无起砂、起灰、露石子；用钥匙轻划表面无明显划痕、无松散颗粒。","w":"手电"},{"t":"顶面渗水痕迹","s":"手电斜照顶棚，无泛碱、水渍、霉点、湿痕；发现痕迹拍照并标注位置，雨后复查。","w":"手电"},{"t":"墙面渗水/返潮","s":"外墙内侧、窗边、管根、卫生间门口无渗水、返碱、发霉；手摸无潮湿感。","w":"手电"},{"t":"层高实测","s":"激光测距仪每房间测5点（四角+中心），取最小值；净高极差≤20mm，与合同标注净高偏差≤10mm。","w":"激光测距仪"},{"t":"开间/进深","s":"激光测距仪沿墙面测3处，与户型图标注尺寸比对，偏差≤±15mm；房间方正度≤10mm。","w":"激光测距仪、卷尺"},{"t":"保温层/墙体","s":"检查外墙内保温层无破损、空鼓、外露；保温板接缝严密，厚度符合设计图纸。","w":"手电、卷尺"}]},{"title":"三、门窗","items":[{"t":"门窗开合","s":"每扇门窗连续开关3次，推拉/平开顺畅，无卡阻、无下垂、无异响；关闭后无缝隙。","w":"无"},{"t":"密封胶","s":"胶缝连续饱满，无断胶、开裂、气泡；胶宽6–10mm，与墙体粘结牢固。","w":"手电"},{"t":"玻璃3C标志","s":"每块安全玻璃均有清晰3C标志，标志可追溯；无标志的玻璃书面要求更换。","w":"手电"},{"t":"中空玻璃","s":"手电贴玻璃照射，中空层无雾气、水珠、灰尘；间隔条完好，无漏气、无结露。","w":"手电"},{"t":"玻璃外观","s":"目测+侧光，玻璃无划伤、裂纹、爆边；距边部15mm内无崩边；镀膜无脱落。","w":"手电"},{"t":"门窗五金","s":"执手、锁点、合页、滑轮齐全牢固；锁点全部到位，启闭顺畅；无锈蚀、无松动。","w":"无"},{"t":"窗台渗水","s":"淋水30min或雨后检查，窗台内外侧无渗水、返碱、积水；窗台排水坡向外，坡度≥5%。","w":"水瓶、卷尺"},{"t":"框墙缝隙","s":"窗框与墙体缝隙发泡胶填塞饱满；外侧耐候胶连续，无开裂、无脱胶；无透风、无透光。","w":"手电"},{"t":"纱窗","s":"纱窗安装牢固，无破损、脱丝；开合顺畅，能完全闭合；边框无变形。","w":"无"},{"t":"阳台栏杆高度","s":"卷尺测量栏杆净高：临空高度≤24m时≥1.05m，>24m时≥1.10m；测量点不少于3处。","w":"卷尺"},{"t":"阳台栏杆牢固度","s":"手推栏杆无明显晃动；立柱、横杆连接牢固；垂直杆件净间距≤110mm，无易攀爬构件。","w":"卷尺"},{"t":"门窗排水孔","s":"窗框排水孔通畅、无堵塞；外侧有排水槽；淋水后窗框内无积水。","w":"水瓶"},{"t":"门窗密封性","s":"关闭后夹A4纸抽拉，纸张不易抽出；密封条贴合、无脱落；无透光、漏风。","w":"A4纸、手电"},{"t":"门槛/窗台石","s":"门槛石、窗台石完整无裂缝；内外高差合理；收口严密，无空鼓、无划伤。","w":"小锤、手电"}]},{"title":"四、电气","items":[{"t":"配电箱外观","s":"箱体固定牢固，垂直度≤3mm；面板完好，箱内无杂物；箱门开合正常。","w":"2m靠尺、手电"},{"t":"回路标识","s":"逐路核对，标识与图纸、实际用电一致；照明、插座、空调、厨房、卫生间回路分开。","w":"手电"},{"t":"开关通断","s":"逐路通断3次，动作正常，无火花、无异响；开关容量与回路负荷匹配。","w":"无"},{"t":"漏电保护","s":"每路按T按钮测试，均能瞬时跳闸；漏电测试仪测动作电流≤30mA、动作时间≤0.1s。","w":"漏电测试仪"},{"t":"插座相位","s":"相位仪逐孔检测，左零右火上地；接线正确，无缺相、无反接。","w":"相位仪"},{"t":"插座接地","s":"接地电阻测试≤4Ω；接地线连续，无虚接；插座接地孔与地线可靠连通。","w":"接地电阻测试仪"},{"t":"插座外观","s":"面板端正、无破损；安装牢固不松动；同一室内插座高度一致，偏差≤5mm。","w":"卷尺、手电"},{"t":"插座通电","s":"逐个用验电器/负载测试，全部通电；开关控制对应灯具，无串控。","w":"验电器"},{"t":"灯位通电","s":"全数开灯，亮灭正常、无频闪；开关控制顺序正确；灯位预留位置与图纸一致。","w":"无"},{"t":"开关面板","s":"面板完好、安装端正；开合手感一致，无卡滞；同一空间开关高度偏差≤5mm。","w":"卷尺"},{"t":"弱电箱","s":"箱体完整、固定牢固；光纤、网线、电视线入户到位；线缆标识清晰。","w":"手电"},{"t":"弱电通断","s":"网线测线仪逐口测试，8芯全通；光纤入户光功率正常或运营商可开通；电视信号可测。","w":"测线仪"},{"t":"等电位","s":"卫生间等电位端子箱齐全；端子连接可靠，无锈蚀；接地电阻≤4Ω。","w":"接地电阻测试仪"},{"t":"线路/套管","s":"线管无外露、无破损；接线盒盖板齐全；导线无裸露；回路绝缘电阻≥0.5MΩ。","w":"绝缘电阻表"}]},{"title":"五、给排水","items":[{"t":"水压测试","s":"关闭总阀，加压至0.8MPa，稳压30min；压降≤0.05MPa，管道、接口无渗漏。","w":"打压泵、压力表"},{"t":"给水管外观","s":"管材无划伤、变形、锈蚀；接口无渗漏；明装管固定牢固，间距≤1.2m。","w":"手电、卷尺"},{"t":"各出水口","s":"厨房、卫生间、阳台逐个开启，出水顺畅、水压稳定；冷热标识正确，无接反。","w":"无"},{"t":"热水供应","s":"打开热水龙头，出热水时间≤15s；水温≥45℃；热水管保温完好。","w":"温度计、秒表"},{"t":"排水通畅","s":"各洗手盆、浴缸、马桶、厨房水槽排水顺畅；无返水、无异响、无堵塞。","w":"无"},{"t":"排水接口","s":"存水弯、接口无渗漏；PVC胶圈完好；管根封堵严密；排水管无破损。","w":"手电"},{"t":"地漏排水","s":"泼水试验，水在30s内排尽，无积水；地漏低于周边地面2–5mm；地漏芯可拆洗。","w":"水瓶、卷尺、秒表"},{"t":"卫生间坡度","s":"泼水/2m靠尺检查，坡向地漏，坡度≥1%；无倒坡、无积水；门口不返水。","w":"2m靠尺、水瓶"},{"t":"管道外露","s":"明露给排水管无锈蚀、无渗漏；接口无外露麻丝/生料带；管道无变形。","w":"手电"},{"t":"水表/阀门","s":"记录水表读数；阀门启闭灵活，无渗漏；总阀位置明确，操作方便。","w":"手电"},{"t":"马桶给排水","s":"进水阀、排水阀正常，无长流水、无渗漏；法兰密封良好；冲水有力。","w":"无"},{"t":"阳台/厨房排水","s":"阳台地漏、厨房排水通畅，无返水；管道接口无渗漏；排水管无冻裂风险。","w":"水瓶"}]},{"title":"六、防水","items":[{"t":"卫生间闭水","s":"蓄水深度≥20mm，持续24–48h；楼下同位置及周边无渗漏、无湿渍。","w":"水桶、卷尺、手电"},{"t":"卫生间防水层","s":"防水层连续，无破损、空鼓、起皮；墙面上返≥300mm，淋浴区≥1800mm。","w":"手电、卷尺"},{"t":"厨房防水","s":"蓄水/淋水24h，无渗漏；防水层上返≥300mm；管根、墙角加强层到位。","w":"水桶、手电"},{"t":"阳台防水","s":"蓄水24h，无渗漏；地漏、管根加强处理；防水层无破损。","w":"水桶、手电"},{"t":"管根/阴阳角","s":"管根、阴阳角附加层到位；无裂缝、无空鼓；密封膏连续饱满。","w":"手电、小锤"},{"t":"楼下观察","s":"闭水期间到楼下同位置检查顶板、管道周边，无渗水、湿渍、滴水。","w":"手电"},{"t":"外墙/窗边防水","s":"雨后或淋水30min，外墙内侧、窗边无渗漏、返碱；窗台无积水。","w":"水瓶、手电"},{"t":"防水保护层","s":"保护层完整，无开裂、空鼓；后续施工未破坏防水；回填无尖锐物。","w":"小锤、手电"},{"t":"闭水记录","s":"拍照留存，记录蓄水时间、深度、楼下观察结果；双方签字确认。","w":"手机/相机"}]},{"title":"七、燃气与暖通","items":[{"t":"燃气表","s":"表具完好、安装牢固；记录读数；表后阀门启闭灵活，无泄漏。","w":"手电"},{"t":"燃气管道","s":"管道无锈蚀、变形；接口用肥皂水/检漏仪检测无泄漏；穿墙套管完好。","w":"肥皂水/检漏仪"},{"t":"燃气报警","s":"报警器通电自检正常；联动切断阀有效（如配置）；安装位置符合规范。","w":"无"},{"t":"暖气/地暖打压","s":"地暖打压0.6MPa、稳压30min，压降≤0.05MPa；分集水器、阀门无渗漏。","w":"打压泵、压力表"},{"t":"暖气片","s":"暖气片安装牢固，无渗漏；阀门启闭灵活；表面无损伤、无锈蚀。","w":"手电"},{"t":"地暖地面","s":"地暖区域地面无开裂、空鼓；温控器通电，升温正常；分路标识清晰。","w":"小锤、温度计"},{"t":"中央空调","s":"内机固定牢固，冷凝水排水通畅；出风无遮挡；制冷/制热试运行30min，效果正常。","w":"温度计"},{"t":"冷媒管/冷凝水","s":"冷媒管保温完好，接口无油渍、无泄漏；冷凝水管坡度正确，无倒坡。","w":"手电"},{"t":"新风试运行","s":"新风主机通电运行，各风口有风；风量可调，无异响、无振动。","w":"风速仪"},{"t":"新风滤网/管道","s":"滤网齐全、清洁；管道连接严密，无漏风、无积尘；风口安装牢固。","w":"手电"},{"t":"烟道通畅","s":"点燃纸/烟雾测试，烟道抽力正常，无倒烟；止逆阀有效，安装到位。","w":"烟雾/纸"},{"t":"厨房排烟/卫生间排风","s":"油烟机、排风扇运行正常，风量达标；管道无脱落、无漏风；止逆阀有效。","w":"风速仪"}]},{"title":"八、精装房加项","items":[{"t":"瓷砖空鼓","s":"小锤逐块敲击，单块空鼓面积≤10%，且每自然间≤2块；边角空鼓不得连续。","w":"小锤"},{"t":"瓷砖对缝/平整","s":"2m靠尺+塞尺，接缝高低差≤0.5mm；缝宽均匀1–2mm；十字缝对齐，无错缝。","w":"2m靠尺、塞尺"},{"t":"瓷砖色差/破损","s":"1.5m处目测，色差无明显；无崩边、裂纹、划伤；阳角收口顺直。","w":"手电"},{"t":"木地板","s":"踩踏无空响、无起翘；接缝≤0.5mm，高低差≤0.3mm；踢脚线收口严密。","w":"塞尺"},{"t":"木地板外观","s":"自然光下无明显色差；无划伤、鼓包、霉变；地板与墙面留缝8–10mm。","w":"手电、卷尺"},{"t":"橱柜五金","s":"柜门开合顺畅，铰链阻尼有效；抽屉滑轨顺滑；拉篮无卡阻、无松动。","w":"无"},{"t":"橱柜安装","s":"柜体水平垂直；台面接缝严密；水槽/灶具开孔吻合；边缘密封胶连续。","w":"水平尺、手电"},{"t":"洁具安装","s":"马桶、洗手盆、浴缸安装牢固，无晃动；打胶连续饱满；排水无渗漏。","w":"手电"},{"t":"洁具功能","s":"马桶冲水有力、无长流水；洗手盆下水顺畅；龙头切换正常、无渗漏。","w":"无"},{"t":"开关面板","s":"面板与墙面贴合，缝隙≤1mm；安装端正；同一空间高度偏差≤5mm。","w":"塞尺、卷尺"},{"t":"涂料","s":"目测+侧光，颜色均匀；无流坠、透底、刷痕、开裂；平整度≤3mm。","w":"手电、2m靠尺"},{"t":"踢脚线","s":"安装牢固，接缝严密；无脱落、变形；与地面缝隙打胶饱满。","w":"手电"},{"t":"门套/窗套","s":"套线安装牢固，接缝严密；无划伤、变形；与墙面收口打胶连续。","w":"手电"},{"t":"成品保护","s":"检查成品无划伤、磕碰、污染；五金无水泥残留；保护膜完整。","w":"手电"}]},{"title":"九、面积与资料交接","items":[{"t":"实测面积对比合同","s":"激光测距/图纸复核套内面积，与合同面积比对；记录实测值，差异按合同约定处理。","w":"激光测距仪、合同"},{"t":"住宅质量保证书","s":"原件齐全、盖章；保修范围与期限明确；与合同约定一致。","w":"无"},{"t":"住宅使用说明书","s":"原件齐全；含户型图、设备说明、保修电话；内容与实际配置一致。","w":"无"},{"t":"竣工验收备案表","s":"复印件加盖开发商公章；备案号可查；工程名称、楼栋号一致。","w":"无"},{"t":"面积实测报告","s":"有资质测绘机构出具、盖章；面积数据与合同一致；附图完整。","w":"无"},{"t":"户型图/管线图","s":"提供最终版户型图、给排水/电气/燃气管线图；标注尺寸与走向。","w":"无"},{"t":"全套钥匙","s":"入户门、单元门、信箱、管井、设备间钥匙齐全，逐一试用；智能锁卡片/密码齐全。","w":"无"},{"t":"物业交接单","s":"物业费、装修押金、垃圾清运费等明细清楚；双方签字确认。","w":"无"},{"t":"水电燃气过户","s":"记录水、电、燃气表号；过户/开户手续明确；欠费结清。","w":"无"},{"t":"维修基金/契税票据","s":"缴纳凭证齐全；金额与合同约定一致；票据信息无误。","w":"无"},{"t":"交房资料核对","s":"按交房通知书逐项核对；资料缺项书面注明，约定补交期限。","w":"交房通知书"}]}]},"a":{"title":"装修阶段验收","note":"说明：四个必到场节点为水电封槽前、防水闭水、泥瓦完成、竣工整体验收；验收合格并签字后方可进入下一工序。","groups":[{"title":"一、水电封槽前（必到场）","items":[{"t":"点位核对","s":"逐点对照水电图，开关、插座、给排水点位齐全；同墙点位水平偏差≤5mm，位置偏差≤20mm；缺项当场补。","w":"卷尺、图纸"},{"t":"强弱电分管间距","s":"强电与弱电管间距≥30cm；交叉处用镀锌过桥/屏蔽处理；同槽敷设视为不合格。","w":"卷尺"},{"t":"水管打压","s":"加压0.8MPa，稳压30min，压降≤0.05MPa；所有接口、阀件无渗漏，拍照记录压力表。","w":"打压泵、压力表"},{"t":"空调单独回路","s":"每台空调单独回路，挂机2.5mm²、柜机4mm²，匹配16A/25A插座；不与照明插座混用。","w":"验电器、卡尺"},{"t":"厨卫独立回路/漏保","s":"厨房、卫生间各设独立回路；漏保动作电流≤30mA、时间≤0.1s；湿区插座加防溅盒。","w":"漏保测试仪"},{"t":"开槽不伤钢筋","s":"开槽深度/宽度为管径+10mm，不得切断钢筋；承重墙开槽须物业/结构许可。","w":"卷尺、钢筋探测仪"},{"t":"线管固定/转弯","s":"线管固定间距≤1m，转弯用弯管器，弯曲半径≥6倍管径；无死弯、无外露。","w":"卷尺"},{"t":"电线线径/分色","s":"照明1.5mm²、普通插座2.5mm²、空调4mm²；火线红/零线蓝/地线黄绿双色，管内无接头。","w":"卡尺、验电器"},{"t":"配电箱回路标识","s":"每回路标识清晰，与图纸一致；逐路通断测试无串控；箱内无杂物、无裸露导线。","w":"手电"},{"t":"给水管走向","s":"左热右冷，冷热水管间距≥15cm；明管固定≤1m，暗管无渗漏；热水管保温。","w":"卷尺"},{"t":"排水管坡度/接口","s":"排水管坡度1%–2%，坡向立管/地漏；接口胶圈完好，无渗漏；通水试验顺畅。","w":"水平尺、水瓶"},{"t":"等电位/接地","s":"卫生间等电位端子箱连接可靠；接地电阻≤4Ω；插座接地孔有效。","w":"接地电阻测试仪"},{"t":"走线拍照留档","s":"每个房间、每面墙、每个回路拍照，照片带标尺/编号；重点拍管线走向、接头、配电箱。","w":"相机、标尺"},{"t":"封槽前联合验收","s":"业主、工长、监理三方到场逐项验收签字；问题闭环后方可封槽。","w":"无"}]},{"title":"二、防水闭水（必到场）","items":[{"t":"防水材料核对","s":"品牌、型号、批次与合同一致；双组份按配比搅拌，开桶记录。","w":"合同、桶"},{"t":"基层处理","s":"基层平整、无空鼓、无浮灰、无明水；阴阳角做圆弧，管根剔槽填实。","w":"小锤、手电"},{"t":"防水层遍数/厚度","s":"防水涂料不少于2遍，交叉涂刷；成膜厚度≥1.5mm，无漏涂、无针孔。","w":"测厚仪、手电"},{"t":"墙面防水高度","s":"厨房墙面≥1.2m，卫生间≥1.8m，淋浴区建议到顶；门口外返300mm。","w":"卷尺"},{"t":"管根/阴阳角附加层","s":"管根、阴阳角、地漏周边做附加层，宽度≥300mm；无开裂、无空鼓。","w":"手电"},{"t":"闭水48h/深度","s":"闭水48h，蓄水深度≥20mm；标记水位，期间不得扰动。","w":"水桶、卷尺"},{"t":"到楼下确认","s":"到楼下同位置检查顶板、管根，无渗水、湿渍；拍照并请楼下住户确认。","w":"手电"},{"t":"门口挡水","s":"门口做挡水坎，闭水不渗到门外/楼道；相邻房间无返潮。","w":"手电"},{"t":"防水保护层","s":"闭水合格后做保护层，无尖锐物；后续施工不得破坏防水。","w":"手电"},{"t":"闭水记录/签字","s":"记录闭水起止时间、深度、楼下确认结果；业主/工长/物业签字，照片归档。","w":"相机"}]},{"title":"三、泥瓦完成（必到场）","items":[{"t":"瓷砖空鼓","s":"小锤逐块敲击，单块空鼓面积≤10%，每自然间≤2块；边角空鼓不连续。","w":"小锤"},{"t":"对缝/错缝","s":"十字缝对齐，错缝≤0.5mm；墙地砖缝宽1–2mm，均匀一致。","w":"塞尺、手电"},{"t":"接缝高低差","s":"相邻砖接缝高低差≤0.5mm；2m靠尺检查无明显台阶。","w":"2m靠尺、塞尺"},{"t":"墙面平整/垂直","s":"墙面平整度≤3mm、垂直度≤3mm；每面墙测3处。","w":"2m靠尺"},{"t":"阴阳角方正","s":"阴阳角方正偏差≤3mm；角线顺直，无崩边。","w":"直角尺"},{"t":"地面排水坡向","s":"地面坡向地漏，坡度≥1%；泼水30s内排尽，无倒坡积水。","w":"水平尺、水瓶"},{"t":"地漏安装","s":"地漏低于周边2–5mm，安装牢固；地漏芯可拆洗，排水30s内排尽。","w":"卷尺、秒表"},{"t":"门槛石/窗台石","s":"门槛石、窗台石无空鼓、裂缝；收口严密，内外高差合理。","w":"小锤、手电"},{"t":"色差/破损","s":"1.5m处目测无明显色差；无崩边、裂纹、划伤；阳角收口顺直。","w":"手电"},{"t":"留缝/美缝","s":"留缝1–2mm，美缝饱满、连续、无凹陷；固化后无脱落。","w":"手电、塞尺"},{"t":"瓷砖备用","s":"瓷砖、地板留5–10%备用，同批次同色号；包装完好并标注位置。","w":"无"},{"t":"成品保护","s":"地面覆盖保护膜，阳角护角；无划伤、无污染、无重物压载。","w":"手电"}]},{"title":"四、木工与油漆","items":[{"t":"吊顶龙骨/吊杆","s":"轻钢龙骨热镀锌层≥120g/㎡；主龙骨间距≤1.2m，副龙骨≤0.4m，吊杆≤1.2m。","w":"卷尺、测厚仪"},{"t":"吊顶平整","s":"吊顶平整度≤3mm，无下沉、无波浪；四周收边顺直。","w":"2m靠尺"},{"t":"石膏板接缝/自攻钉","s":"石膏板接缝留V缝/3–5mm，嵌缝膏+防裂带；自攻钉间距≤150mm，钉眼防锈。","w":"卷尺"},{"t":"柜体方正","s":"柜体对角线偏差≤2mm，垂直度≤2mm/m；台面水平，接缝严密。","w":"卷尺、水平尺"},{"t":"柜门缝隙/开合","s":"柜门缝隙均匀≤2mm，开合顺畅；铰链阻尼有效，抽屉滑轨顺滑。","w":"塞尺"},{"t":"木作防潮/收口","s":"木作离地≥10mm，背板防潮膜；收口打MS胶，无缝隙、无污染。","w":"手电"},{"t":"腻子打磨","s":"腻子打磨平整度≤2mm，无砂眼、划痕、波浪；阴阳角顺直。","w":"2m靠尺、手电"},{"t":"乳胶漆","s":"无流坠、透底、刷痕、色差；1.5m目测均匀，平整度≤3mm。","w":"手电"},{"t":"木器漆","s":"漆膜饱满，无刷痕、颗粒、漏刷；颜色与样板一致。","w":"手电"},{"t":"成品保护/修补","s":"地面/柜体覆盖保护；补漆无色差、无痕迹；五金无涂料残留。","w":"手电"}]},{"title":"五、主材核对","items":[{"t":"品牌型号规格","s":"核对品牌、型号、规格、颜色与合同/订单一致；不一致拒收并书面记录。","w":"合同、订单"},{"t":"数量/批次/色号","s":"核对数量、批次、色号；同空间同批次，避免色差。","w":"送货单"},{"t":"瓷砖/地板备用","s":"瓷砖、地板、踢脚线留5–10%备用；同批次同色号，妥善存放。","w":"无"},{"t":"板材环保等级","s":"板材环保等级ENF/E0，提供检测报告；封边严密，无刺鼻气味。","w":"检测报告"},{"t":"胶水/乳胶漆环保","s":"胶水、乳胶漆符合十环/低VOC；提供检测报告与合格证。","w":"检测报告"},{"t":"五金304","s":"外露五金304不锈钢；沿海3km内禁用201/普通镀锌件；盐雾试验≥48h。","w":"材质标识"},{"t":"橱柜/卫浴/灯具","s":"橱柜、卫浴、灯具、面板与订单一致；开箱验货，配件齐全。","w":"订单"},{"t":"到货破损/理赔","s":"到货破损当场拍照、拒收/理赔；签字确认数量与外观。","w":"手机、送货单"}]},{"title":"六、竣工整体验收（必到场）","items":[{"t":"门/门套","s":"门扇开合顺畅，缝隙均匀≤2mm；门套牢固，五金无锈；关闭无透光。","w":"塞尺、手电"},{"t":"木地板","s":"无空响、起翘；接缝≤0.5mm，高低差≤0.3mm；踢脚线收口严密。","w":"塞尺"},{"t":"橱柜","s":"柜门/抽屉开合顺畅，台面接缝严密；水槽/灶具开孔吻合，打胶连续。","w":"手电"},{"t":"洁具","s":"安装牢固无晃动；打胶饱满；马桶冲水有力、无长流水；排水无渗漏。","w":"手电"},{"t":"灯具","s":"全亮、色温一致、无频闪；开关控制顺序正确。","w":"无"},{"t":"开关插座","s":"左零右火上地；接地有效；面板贴合缝隙≤1mm；同空间高度≤5mm。","w":"相位仪、塞尺"},{"t":"五金件","s":"拉手、毛巾架、合页等牢固；304不锈钢无锈蚀；无松动。","w":"手电"},{"t":"补漆/修补","s":"补漆/修补处无色差、无流坠、无痕迹；1.5m目测一致。","w":"手电"},{"t":"保洁","s":"开荒保洁后无灰尘、胶痕、涂料点；玻璃/五金洁净。","w":"手电"},{"t":"成品无划伤","s":"门、地板、橱柜、台面、洁具无划伤、磕碰；成品保护完整。","w":"手电"},{"t":"通水通电通燃气","s":"全屋通水、通电、通燃气；满负荷测试30min，无跳闸、无渗漏、无燃气味。","w":"无"},{"t":"排水/地漏","s":"地漏、洗手盆、马桶排水顺畅；无返味、无积水；存水弯有效。","w":"水瓶"},{"t":"门窗密封/纱窗","s":"密封条贴合，无透光漏风；纱窗完好；窗台排水顺畅。","w":"手电"},{"t":"竣工资料/保修卡","s":"竣工图、水电走向图、保修卡、设备说明书齐全；签字归档。","w":"无"}]}]}},"schedule":{"title":"装修流程与排期","days":"74天","note":"口径：标准工期按60–90㎡刚需户型估算，合计74天；付款建议分4期，尾款5–10%挂钩入住后支付。","stages":[{"no":"①","name":"设计与准备","desc":"量房、需求梳理、平面/水电/柜体设计、施工图与报价审核","days":"7","deliver":"平面图、施工图、完整报价单、主材清单","owner":"设计师/业主","pay":"第1期30%（签约后）","acts":[{"name":"需求与预算锁定","desc":"确定风格、功能、预算上限；列出必做/可省项，锁定总预算。","days":"2"},{"name":"平面/水电/柜体设计","desc":"平面布置、水电点位、柜体尺寸；核对承重墙、燃气表位置。","days":"3"},{"name":"施工图与报价审核","desc":"清单式报价核对品牌型号数量；增项上限≤5%、付款节点写入合同。","days":"2"}]},{"no":"②","name":"报批与开工准备","desc":"物业报批、主材下单、成品保护、三方技术交底","days":"5","deliver":"物业开工证、主材订单、进场计划、交底记录","owner":"业主/工长","pay":"—（已含第1期）","acts":[{"name":"物业报批/施工许可","desc":"提交图纸、施工人员信息、押金；确认施工时间、垃圾清运与噪音规定。","days":"2"},{"name":"主材下单/进场计划","desc":"瓷砖、地板、橱柜、门、洁具下单；确认交期与进场顺序。","days":"2"},{"name":"成品保护/技术交底","desc":"保护入户门、电梯、公共走道；三方技术交底并签字。","days":"1"}]},{"no":"③","name":"拆改","desc":"拆除、垃圾清运、砌筑修补、原始尺寸复核","days":"3","deliver":"拆除记录、垃圾清运单、砌筑照片","owner":"工长/泥瓦工","pay":"—","acts":[{"name":"拆除/垃圾清运","desc":"按图拆除，不拆承重墙/剪力墙；垃圾装袋清运，不得堆放在公共区域。","days":"2"},{"name":"砌筑/修补","desc":"新砌墙植筋/拉结，门洞设过梁；墙面修补平整，尺寸复核。","days":"1"}]},{"no":"④","name":"水电改造","desc":"点位定位、开槽布管、打压测试、封槽；走线拍照留档","days":"10","deliver":"水电走向图、打压记录、电路测试记录、隐蔽照片","owner":"水电工/工长/监理","pay":"第2期30%（隐蔽验收后）","acts":[{"name":"点位定位","desc":"按水电图弹线定位，业主现场确认；位置偏差≤20mm，同墙点位水平≤5mm。","days":"2"},{"name":"开槽布管","desc":"承重墙不开横槽；强弱电间距≥30cm；线管固定≤1m，无死弯、无外露。","days":"3"},{"name":"打压/电路测试","desc":"水管0.8MPa/30min，压降≤0.05MPa；漏保、绝缘、通断逐路测试。","days":"2"},{"name":"隐蔽拍照/封槽","desc":"每个房间、每面墙拍照带标尺；三方验收签字后封槽，未验收不得覆盖。","days":"3"}]},{"no":"⑤","name":"防水+泥瓦","desc":"防水施工、闭水48h、瓷砖铺贴、瓦工验收","days":"15","deliver":"防水照片、闭水记录、铺贴照片、瓦工验收单","owner":"防水工/泥瓦工/监理","pay":"—","acts":[{"name":"防水施工","desc":"基层处理、附加层、两遍交叉涂刷；厨房≥1.2m、卫生间≥1.8m。","days":"3"},{"name":"闭水试验","desc":"蓄水48h、水深≥20mm；到楼下同位置确认无渗漏并拍照。","days":"2"},{"name":"瓷砖铺贴","desc":"对缝、空鼓控制、排水坡向；瓷砖留5–10%备用，同批次同色号。","days":"7"},{"name":"瓦工验收/保护","desc":"空鼓、平整、坡度验收；地面覆盖保护膜，阳角护角。","days":"3"}]},{"no":"⑥","name":"木工+油漆","desc":"吊顶、柜体、腻子、乳胶漆/木器漆；防裂防潮","days":"20","deliver":"木作验收单、腻子验收记录、漆面验收、色号记录","owner":"木工/油漆工/监理","pay":"第3期30%（泥瓦+木工油漆完工）","acts":[{"name":"吊顶/木作","desc":"龙骨热镀锌≥120g/㎡；石膏板防裂；柜体对角线偏差≤2mm，垂直度≤2mm/m。","days":"7"},{"name":"墙面腻子","desc":"腻子2–3遍，打磨平整度≤2mm；无砂眼、划痕、波浪，阴阳角顺直。","days":"7"},{"name":"乳胶漆/木器漆","desc":"底漆+面漆；1.5m目测无流坠、透底、刷痕、色差；色号留样。","days":"6"}]},{"no":"⑦","name":"安装收尾","desc":"灯具、开关插座、橱柜、洁具、门、地板、踢脚线安装","days":"7","deliver":"安装验收单、通电记录、地板验收记录","owner":"电工/安装工/地板工","pay":"—","acts":[{"name":"灯具/开关插座","desc":"按图安装，通电测试；面板贴合缝隙≤1mm，同一空间高度偏差≤5mm。","days":"2"},{"name":"橱柜/洁具/门","desc":"柜体水平、打胶连续；洁具无渗漏；门套收口严密。","days":"3"},{"name":"地板/踢脚线","desc":"地板无空响、接缝≤0.5mm；踢脚线接缝严密、收口牢固。","days":"2"}]},{"no":"⑧","name":"软装与入住","desc":"开荒保洁、软装进场、竣工资料、尾款结算","days":"7","deliver":"保洁验收照片、软装清单、竣工验收单、保修卡","owner":"业主/软装师/工长","pay":"第4期5–10%（入住后30天）","acts":[{"name":"开荒保洁","desc":"全屋除尘、除胶、除涂料点；玻璃、五金、台面洁净。","days":"2"},{"name":"软装进场","desc":"家具、窗帘、灯具、饰品按图摆放；核对色系与尺寸。","days":"3"},{"name":"入住/尾款结算","desc":"通水通电通气、保修卡交接；入住30天后付尾款。","days":"2"}]}]}};
+</script>
+<script>
+(function(){
+  'use strict';
+  var KEY = 'xf_manage_v1';
+  var MODS = ['v','a'];
+  var TOTAL_CHECK = 0;
+
+  function $(s,r){ return (r||document).querySelector(s); }
+  function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  /* ---------- 数据准备 ---------- */
+  var D = DATA;
+  MODS.forEach(function(m){
+    var n = 0;
+    D.modules[m].groups.forEach(function(g,gi){
+      g.items.forEach(function(it){ n++; it.id = m + n; it.idx = n; it.gi = gi; });
+      g.len = g.items.length;
+    });
+    D.modules[m].total = n;
+    TOTAL_CHECK += n;
+  });
+  D.schedule.stages.forEach(function(s,si){
+    s.id = 's' + (si+1);
+    s.acts.forEach(function(a,ai){ a.id = s.id + '-' + (ai+1); });
+  });
+  var ITEM_MAP = {};
+  MODS.forEach(function(m){
+    D.modules[m].groups.forEach(function(g,gi){
+      g.items.forEach(function(it){ ITEM_MAP[it.id] = {m:m,gi:gi,it:it,g:g}; });
+    });
+  });
+
+  /* ---------- 状态 ---------- */
+  function blank(){
+    return {items:{},notes:{},stages:{},acts:{},
+      ui:{tab:'v',filters:{v:'all',a:'all'},collapsed:{},openItems:{},openStages:{s1:true}}};
+  }
+  var S;
+  try{ S = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ S = null; }
+  var B = blank();
+  S = Object.assign({}, B, S || {});
+  S.items = S.items || {}; S.notes = S.notes || {}; S.stages = S.stages || {}; S.acts = S.acts || {};
+  S.ui = Object.assign({}, B.ui, S.ui || {});
+  S.ui.filters = Object.assign({}, B.ui.filters, S.ui.filters || {});
+  S.ui.collapsed = S.ui.collapsed || {};
+  S.ui.openItems = S.ui.openItems || {};
+  S.ui.openStages = S.ui.openStages || {};
+  if(S.ui.openStages.s1 === undefined) S.ui.openStages.s1 = true;
+  if(MODS.indexOf(S.ui.tab) < 0 && S.ui.tab !== 's') S.ui.tab = 'v';
+
+  var saveTimer = 0;
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  }
+  function saveSoon(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, 150);
+  }
+  function stOf(id){ return S.items[id] || 'n'; }
+
+  /* ---------- 渲染：清单 ---------- */
+  function clsOf(st){ return st === 'd' ? 'done' : st === 'r' ? 'fix' : 'none'; }
+
+  function itemHTML(m,it){
+    var st = stOf(it.id);
+    var note = S.notes[it.id] || {};
+    var open = !!S.ui.openItems[it.id];
+    return '<div class="item ' + clsOf(st) + (open?' open':'') + '" id="item-' + it.id + '" data-id="' + it.id + '" data-mod="' + m + '" data-st="' + st + '">' +
+      '<button class="chk" type="button" aria-label="切换完成状态"><span class="circ">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg><b>!</b>' +
+      '</span></button>' +
+      '<div class="ibody">' +
+        '<div class="itop"><span class="pmark"></span><span class="ino">' + it.idx + '</span>' +
+          '<span class="ititle">' + esc(it.t) + '</span>' +
+          '<button class="rbtn" type="button"><span>整改</span></button>' +
+        '</div>' +
+        '<p class="istd">' + esc(it.s) + '</p>' +
+        '<div class="iextra"><span>工具 · ' + esc(it.w || '无') + '</span>' +
+          '<button class="more" type="button">' + (open?'收起标准':'展开标准') + '</button></div>' +
+        '<div class="notes">' +
+          '<label class="nf"><span>位置</span><input data-f="loc" type="text" placeholder="如：主卧西墙、窗边" value="' + esc(note.loc||'') + '"></label>' +
+          '<div class="nrow">' +
+            '<label class="nf"><span>数量</span><input data-f="qty" type="text" placeholder="如：3 处" value="' + esc(note.qty||'') + '"></label>' +
+            '<label class="nf"><span>整改期限</span><input data-f="due" type="date" value="' + esc(note.due||'') + '"></label>' +
+          '</div>' +
+        '</div>' +
+        '<div class="note-print"></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function groupHTML(m,g,gi){
+    var collapsed = !!S.ui.collapsed[m+gi];
+    return '<div class="gwrap' + (collapsed?' collapsed':'') + '" id="gw-' + m + gi + '">' +
+      '<div class="ghead" data-m="' + m + '" data-gi="' + gi + '">' +
+        '<div class="gt"><span class="gname">' + esc(g.title) + '</span><span class="gcount">0/' + g.len + '</span></div>' +
+        '<span class="gchev">▾</span>' +
+      '</div>' +
+      '<div class="gbar"><i></i></div>' +
+      '<div class="gitems">' + g.items.map(function(it){ return itemHTML(m,it); }).join('') + '</div>' +
+    '</div>';
+  }
+
+  function moduleView(m){
+    var mod = D.modules[m];
+    return '<section class="view' + (S.ui.tab===m?' on':'') + '" data-tab="' + m + '">' +
+      '<div class="print-head"><h2>' + esc(mod.title) + '</h2><p>共 ' + mod.total + ' 项 · 检查人＿＿＿＿　日期＿＿＿＿</p></div>' +
+      '<div class="mcard">' +
+        '<div class="mhead"><div><h2>' + esc(mod.title) + '</h2><p class="msub">' + mod.total + ' 项 · ' + mod.groups.length + ' 组</p></div>' +
+          '<div class="mnum"><b id="num-' + m + '">0</b>/' + mod.total + '</div></div>' +
+        '<div class="pbar"><i id="bar-' + m + '"></i></div>' +
+        '<div class="mstats" id="stats-' + m + '"></div>' +
+        '<p class="hint">' + esc(mod.note) + '</p>' +
+        '<div class="filters" data-m="' + m + '">' +
+          '<button data-f="all" class="on">全部 <i>0</i></button>' +
+          '<button data-f="todo">未完成 <i>0</i></button>' +
+          '<button data-f="fix">待整改 <i>0</i></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="glist">' + mod.groups.map(function(g,gi){ return groupHTML(m,g,gi); }).join('') + '</div>' +
+      '<div class="empty-filter" id="empty-' + m + '" hidden>没有符合条件的条目</div>' +
+    '</section>';
+  }
+
+  /* ---------- 渲染：排期 ---------- */
+  function badgeText(st){ return st==='d'?'已完成':st==='p'?'进行中':'未开始'; }
+
+  function actHTML(a){
+    var done = !!S.acts[a.id];
+    return '<button class="act' + (done?' done':'') + '" type="button" data-aid="' + a.id + '">' +
+      '<span class="achk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.6l4.3 4.3L19 7.4"></path></svg></span>' +
+      '<span class="amain"><span class="aname">' + esc(a.name) + '</span><span class="adesc">' + esc(a.desc) + '</span></span>' +
+      '<span class="adays">' + esc(a.days) + '天</span>' +
+    '</button>';
+  }
+
+  function stageHTML(s){
+    var open = !!S.ui.openStages[s.id];
+    var st = S.stages[s.id] || 'n';
+    return '<div class="stage' + (open?' open':'') + '" id="stage-' + s.id + '" data-sid="' + s.id + '">' +
+      '<button class="shead" type="button">' +
+        '<span class="sno">' + esc(s.no) + '</span>' +
+        '<span class="smain">' +
+          '<span class="srow"><span class="sname">' + esc(s.name) + '</span>' +
+            '<span class="days">' + esc(s.days) + '天</span>' +
+            '<span class="badge ' + st + '">' + badgeText(st) + '</span></span>' +
+          '<span class="sdesc">' + esc(s.desc) + '</span>' +
+        '</span>' +
+        '<span class="sright"><span class="scount">0/' + s.acts.length + '</span><span class="schev">▾</span></span>' +
+      '</button>' +
+      '<div class="sbody">' +
+        '<div class="kvs">' +
+          '<div class="kv"><span>关键交付物</span><p>' + esc(s.deliver) + '</p></div>' +
+          '<div class="kv"><span>施工方/责任人</span><p>' + esc(s.owner) + '</p></div>' +
+          (s.pay ? '<div class="kv pay"><span>付款节点</span><p>' + esc(s.pay) + '</p></div>' : '') +
+        '</div>' +
+        '<div class="acts">' + s.acts.map(actHTML).join('') + '</div>' +
+        '<div class="sstat"><span>阶段状态</span><div class="sseg" data-sid="' + s.id + '">' +
+          '<button data-v="n">未开始</button><button data-v="p">进行中</button><button data-v="d">已完成</button>' +
+        '</div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function scheduleView(){
+    var sc = D.schedule;
+    return '<section class="view' + (S.ui.tab==='s'?' on':'') + '" data-tab="s">' +
+      '<div class="print-head"><h2>' + esc(sc.title) + '</h2><p>标准工期 ' + esc(sc.days) + ' · 8 阶段 / 25 个动作</p></div>' +
+      '<div class="mcard">' +
+        '<div class="mhead"><div><h2>' + esc(sc.title) + '</h2><p class="msub">8 阶段 · 25 个动作 · 标准工期 ' + esc(sc.days) + '</p></div>' +
+          '<div class="mnum"><b id="num-s">0</b>/25</div></div>' +
+        '<div class="pbar"><i id="bar-s"></i></div>' +
+        '<div class="mstats" id="stats-s"></div>' +
+        '<p class="hint">' + esc(sc.note) + '</p>' +
+      '</div>' +
+      '<div class="stages">' + sc.stages.map(stageHTML).join('') + '</div>' +
+    '</section>';
+  }
+
+  $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView();
+
+  /* ---------- 进度 ---------- */
+  function groupStats(mod){
+    var res = [];
+    mod.groups.forEach(function(g){
+      var d = 0, f = 0;
+      g.items.forEach(function(it){
+        var st = stOf(it.id);
+        if(st === 'd') d++; else if(st === 'r') f++;
+      });
+      res.push({d:d,f:f,len:g.len});
+    });
+    return res;
+  }
+
+  function updateProgress(){
+    var allDone = 0, allFix = 0;
+    MODS.forEach(function(m){
+      var mod = D.modules[m];
+      var res = groupStats(mod);
+      var done = 0, fix = 0;
+      res.forEach(function(r){ done += r.d; fix += r.f; });
+      allDone += done; allFix += fix;
+      $('#num-' + m).textContent = done;
+      $('#bar-' + m).style.width = (mod.total ? done/mod.total*100 : 0) + '%';
+      $('#stats-' + m).innerHTML =
+        '<span class="s-ok"><em></em>已完成 ' + done + '</span>' +
+        '<span class="s-fix"><em></em>待整改 ' + fix + '</span>' +
+        '<span class="s-na"><em></em>未开始 ' + (mod.total - done - fix) + '</span>';
+      var fb = $$('.filters[data-m="' + m + '"] button');
+      fb[0].querySelector('i').textContent = mod.total;
+      fb[1].querySelector('i').textContent = mod.total - done;
+      fb[2].querySelector('i').textContent = fix;
+      mod.groups.forEach(function(g,gi){
+        var wrap = document.getElementById('gw-' + m + gi);
+        if(!wrap) return;
+        var r = res[gi];
+        wrap.querySelector('.gcount').textContent = r.d + '/' + r.len;
+        wrap.querySelector('.gbar i').style.width = (r.len ? r.d/r.len*100 : 0) + '%';
+      });
+    });
+
+    var p = TOTAL_CHECK ? allDone / TOTAL_CHECK : 0;
+    $('#gpct').textContent = Math.round(p*100) + '%';
+    var C = 2 * Math.PI * 18.5;
+    var fill = $('#ringFill');
+    fill.style.strokeDasharray = C;
+    fill.style.strokeDashoffset = C * (1 - p);
+    $('#gstat').textContent = '已完成 ' + allDone + '/' + TOTAL_CHECK + ' · 待整改 ' + allFix;
+    $('#probCount').textContent = allFix;
+    $('#probCount').hidden = allFix === 0;
+  }
+
+  /* ---------- 筛选 ---------- */
+  function applyFilter(m){
+    var f = S.ui.filters[m] || 'all';
+    $$('.filters[data-m="' + m + '"] button').forEach(function(b){
+      b.classList.toggle('on', b.dataset.f === f);
+    });
+    var mod = D.modules[m], visible = 0;
+    mod.groups.forEach(function(g,gi){
+      var gv = 0;
+      g.items.forEach(function(it){
+        var el = document.getElementById('item-' + it.id);
+        var st = stOf(it.id);
+        var show = f === 'all' || (f === 'todo' && st !== 'd') || (f === 'fix' && st === 'r');
+        el.classList.toggle('hidef', !show);
+        if(show) gv++;
+      });
+      var wrap = document.getElementById('gw-' + m + gi);
+      wrap.classList.toggle('hidef', gv === 0);
+      visible += gv;
+    });
+    var em = $('#empty-' + m);
+    em.hidden = visible > 0;
+  }
+
+  /* ---------- 条目交互 ---------- */
+  function notePrint(el){
+    var n = S.notes[el.dataset.id] || {};
+    var parts = [];
+    if(n.loc) parts.push('位置：' + n.loc);
+    if(n.qty) parts.push('数量：' + n.qty);
+    if(n.due) parts.push('期限：' + n.due);
+    var np = el.querySelector('.note-print');
+    if(np) np.textContent = parts.join('　');
+  }
+
+  function refreshItem(id){
+    var el = document.getElementById('item-' + id);
+    if(!el) return;
+    var st = stOf(id);
+    el.dataset.st = st;
+    el.classList.remove('none','done','fix');
+    el.classList.add(clsOf(st));
+    el.querySelector('.rbtn span').textContent = st === 'r' ? '待整改' : '整改';
+    el.querySelector('.pmark').textContent = st === 'd' ? '✓' : st === 'r' ? '✗' : '□';
+    notePrint(el);
+  }
+
+  function setStatus(id, st){
+    if(st === 'n') delete S.items[id]; else S.items[id] = st;
+    var info = ITEM_MAP[id];
+    save();
+    refreshItem(id);
+    if(info) applyFilter(info.m);
+    updateProgress();
+  }
+
+  function toggleDone(el){
+    var st = el.dataset.st;
+    setStatus(el.dataset.id, st === 'd' ? 'n' : 'd');
+  }
+  function toggleFix(el){
+    var st = el.dataset.st;
+    setStatus(el.dataset.id, st === 'r' ? 'n' : 'r');
+    if(st !== 'r') toast('已加入问题清单');
+  }
+  function toggleOpen(el){
+    var id = el.dataset.id;
+    var open = !el.classList.contains('open');
+    el.classList.toggle('open', open);
+    if(open) S.ui.openItems[id] = true; else delete S.ui.openItems[id];
+    var more = el.querySelector('.more');
+    if(more) more.textContent = open ? '收起标准' : '展开标准';
+    saveSoon();
+  }
+
+  var lp = {timer:null, fired:false, x:0, y:0};
+  document.addEventListener('pointerdown', function(e){
+    var item = e.target.closest('.item');
+    if(!item) return;
+    if(e.target.closest('button,input,label,.notes')) return;
+    lp.x = e.clientX; lp.y = e.clientY; lp.fired = false;
+    clearTimeout(lp.timer);
+    lp.timer = setTimeout(function(){
+      lp.fired = true;
+      setStatus(item.dataset.id, 'r');
+      if(navigator.vibrate) navigator.vibrate(20);
+      toast('已标记待整改');
+    }, 550);
+  });
+  document.addEventListener('pointermove', function(e){
+    if(lp.timer && (Math.abs(e.clientX-lp.x) > 10 || Math.abs(e.clientY-lp.y) > 10)){
+      clearTimeout(lp.timer); lp.timer = null;
+    }
+  });
+  document.addEventListener('pointerup', function(){ clearTimeout(lp.timer); lp.timer = null; });
+  document.addEventListener('pointercancel', function(){ clearTimeout(lp.timer); lp.timer = null; });
+  document.addEventListener('contextmenu', function(e){
+    if(e.target.closest('.item')) e.preventDefault();
+  });
+
+  /* ---------- 排期交互 ---------- */
+  function updateSchedule(){
+    var totalAct = 0, doneAct = 0, doneStage = 0;
+    D.schedule.stages.forEach(function(s){
+      var d = 0;
+      s.acts.forEach(function(a){ if(S.acts[a.id]) d++; });
+      totalAct += s.acts.length; doneAct += d;
+      var card = document.getElementById('stage-' + s.id);
+      if(!card) return;
+      var st = S.stages[s.id] || 'n';
+      if(st === 'd') doneStage++;
+      var badge = card.querySelector('.badge');
+      badge.className = 'badge ' + st;
+      badge.textContent = badgeText(st);
+      card.querySelector('.scount').textContent = d + '/' + s.acts.length;
+      $$('.sseg button', card).forEach(function(b){ b.classList.toggle('on', b.dataset.v === st); });
+      s.acts.forEach(function(a){
+        var ab = card.querySelector('.act[data-aid="' + a.id + '"]');
+        if(ab) ab.classList.toggle('done', !!S.acts[a.id]);
+      });
+    });
+    var n = D.schedule.actions || 25;
+    $('#num-s').textContent = doneAct;
+    $('#bar-s').style.width = (totalAct ? doneAct/totalAct*100 : 0) + '%';
+    $('#stats-s').innerHTML =
+      '<span class="s-ok"><em></em>动作已完成 ' + doneAct + '/' + totalAct + '</span>' +
+      '<span class="s-na"><em></em>阶段已完成 ' + doneStage + '/' + D.schedule.stages.length + '</span>';
+  }
+
+  function toggleAct(id, card){
+    if(S.acts[id]) delete S.acts[id]; else S.acts[id] = true;
+    var s = D.schedule.stages.filter(function(x){ return x.id === card.dataset.sid; })[0];
+    var d = s.acts.filter(function(a){ return S.acts[a.id]; }).length;
+    if(d === s.acts.length) S.stages[s.id] = 'd';
+    else if(d > 0) S.stages[s.id] = 'p';
+    else if(S.stages[s.id] === 'd' || S.stages[s.id] === 'p') S.stages[s.id] = 'n';
+    save();
+    updateSchedule();
+  }
+
+  /* ---------- Tab ---------- */
+  function switchTab(t){
+    S.ui.tab = t;
+    save();
+    $$('.view').forEach(function(v){ v.classList.toggle('on', v.dataset.tab === t); });
+    $$('#topTabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
+    $$('.navbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- 问题清单 ---------- */
+  function getProblems(){
+    var out = [];
+    MODS.forEach(function(m){
+      D.modules[m].groups.forEach(function(g){
+        g.items.forEach(function(it){
+          if(stOf(it.id) === 'r'){
+            var n = S.notes[it.id] || {};
+            out.push({m:m, module:D.modules[m].title, g:g.title, idx:it.idx, t:it.t, id:it.id,
+              loc:n.loc||'', qty:n.qty||'', due:n.due||''});
+          }
+        });
+      });
+    });
+    return out;
+  }
+
+  function noteLine(p){
+    var parts = [];
+    if(p.loc) parts.push('位置：' + p.loc);
+    if(p.qty) parts.push('数量：' + p.qty);
+    if(p.due) parts.push('期限：' + p.due);
+    return parts.join('　') || '备注未填写';
+  }
+
+  function renderProblems(){
+    var list = getProblems();
+    $('#probTitle').textContent = '问题清单（' + list.length + '）';
+    var body = $('#probBody');
+    if(!list.length){
+      body.innerHTML = '<div class="pempty">暂无待整改项<br><span>在清单中点击「整改」或长按条目即可标记</span></div>';
+      $('#probTip').textContent = '待整改项汇总，可直接发给施工方或物业。';
+      return;
+    }
+    $('#probTip').textContent = '共 ' + list.length + ' 项待整改 · 日期 ' + todayStr() + '。可复制文本或导出 CSV 发给施工方 / 物业。';
+    var html = '';
+    MODS.forEach(function(m){
+      var ps = list.filter(function(p){ return p.m === m; });
+      if(!ps.length) return;
+      html += '<div class="pgroup"><div class="pgh">' + esc(D.modules[m].title) + '<i>' + ps.length + ' 项</i></div>';
+      D.modules[m].groups.forEach(function(g){
+        var gs = ps.filter(function(p){ return p.g === g.title; });
+        if(!gs.length) return;
+        html += '<div class="pgsub">' + esc(g.title) + '</div>';
+        gs.forEach(function(p){
+          html += '<div class="prow">' +
+            '<div class="prtop"><span class="prno">#' + p.idx + '</span></div>' +
+            '<div class="prname">' + esc(p.t) + '</div>' +
+            '<div class="prnote">' + esc(noteLine(p)) + '</div>' +
+            '<button class="prgo" data-go="' + p.id + '">定位</button>' +
+          '</div>';
+        });
+      });
+      html += '</div>';
+    });
+    body.innerHTML = html;
+  }
+
+  function todayStr(){
+    var d = new Date();
+    function p(n){ return (n<10?'0':'') + n; }
+    return d.getFullYear() + '.' + p(d.getMonth()+1) + '.' + p(d.getDate());
+  }
+
+  function problemsText(){
+    var list = getProblems();
+    if(!list.length) return '暂无待整改项（' + todayStr() + '）';
+    var lines = ['【验房 / 装修整改问题清单】' + todayStr(), ''];
+    MODS.forEach(function(m){
+      var ps = list.filter(function(p){ return p.m === m; });
+      if(!ps.length) return;
+      lines.push('■ ' + D.modules[m].title + '（' + ps.length + ' 项）');
+      D.modules[m].groups.forEach(function(g){
+        var gs = ps.filter(function(p){ return p.g === g.title; });
+        if(!gs.length) return;
+        lines.push(g.title);
+        gs.forEach(function(p){
+          lines.push('· ' + p.idx + '. ' + p.t);
+          lines.push('  ' + noteLine(p));
+        });
+      });
+      lines.push('');
+    });
+    lines.push('合计：' + list.length + ' 项待整改。请按期限整改并拍照回复。');
+    return lines.join('\n');
+  }
+
+  function csvCell(v){ return '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"'; }
+
+  function exportCsv(){
+    var list = getProblems();
+    if(!list.length){ toast('暂无待整改项'); return; }
+    var rows = [['模块','分组','序号','检查项','问题位置','数量','整改期限','导出日期']];
+    list.forEach(function(p){
+      rows.push([p.module, p.g, '#'+p.idx, p.t, p.loc, p.qty, p.due, todayStr()]);
+    });
+    var csv = '\uFEFF' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '验房整改清单_' + todayStr().replace(/\./g,'') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
+    toast('已导出 CSV');
+  }
+
+  function fallbackCopy(text, cb){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try{ document.execCommand('copy'); cb(); }
+    catch(e){ toast('复制失败，请长按选择文本'); }
+    document.body.removeChild(ta);
+  }
+  function copyText(text, msg){
+    var done = function(){ toast(msg || '已复制到剪贴板'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  /* ---------- 浮层 ---------- */
+  var toastTimer = 0;
+  function toast(msg){
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 1800);
+  }
+
+  function lock(v){ document.body.classList.toggle('lock', v); }
+  function openSheet(id){ $('#'+id).classList.add('on'); lock(true); }
+  function closeSheets(){
+    $$('.sheet').forEach(function(s){ s.classList.remove('on'); });
+    $('#confirmDlg').classList.remove('on');
+    lock(false);
+  }
+
+  function gotoItem(id){
+    closeSheets();
+    var info = ITEM_MAP[id];
+    if(!info) return;
+    switchTab(info.m);
+    delete S.ui.collapsed[info.m + info.gi];
+    var wrap = document.getElementById('gw-' + info.m + info.gi);
+    if(wrap) wrap.classList.remove('collapsed');
+    S.ui.filters[info.m] = 'all';
+    applyFilter(info.m);
+    var el = document.getElementById('item-' + id);
+    if(!el) return;
+    el.classList.add('open');
+    S.ui.openItems[id] = true;
+    refreshItem(id);
+    save();
+    setTimeout(function(){
+      el.scrollIntoView({block:'center', behavior:'smooth'});
+      el.classList.add('flash');
+      setTimeout(function(){ el.classList.remove('flash'); }, 1400);
+    }, 60);
+  }
+
+  /* ---------- 事件 ---------- */
+  document.addEventListener('click', function(e){
+    var t = e.target;
+
+    var segTab = t.closest('#topTabs button, .navbtn');
+    if(segTab){ switchTab(segTab.dataset.tab); return; }
+
+    var ghead = t.closest('.ghead');
+    if(ghead){
+      var m = ghead.dataset.m, gi = ghead.dataset.gi;
+      var wrap = document.getElementById('gw-' + m + gi);
+      var col = !wrap.classList.contains('collapsed');
+      wrap.classList.toggle('collapsed', col);
+      if(col) S.ui.collapsed[m+gi] = true; else delete S.ui.collapsed[m+gi];
+      saveSoon();
+      return;
+    }
+
+    var filterBtn = t.closest('.filters button');
+    if(filterBtn){
+      var fm = filterBtn.closest('.filters').dataset.m;
+      S.ui.filters[fm] = filterBtn.dataset.f;
+      save();
+      applyFilter(fm);
+      return;
+    }
+
+    var item = t.closest('.item');
+    if(item){
+      if(t.closest('.chk')){ toggleDone(item); return; }
+      if(t.closest('.rbtn')){ toggleFix(item); return; }
+      if(t.closest('.more')){ toggleOpen(item); return; }
+      if(t.closest('input,label,.notes')) return;
+      if(lp.fired){ lp.fired = false; return; }
+      toggleOpen(item);
+      return;
+    }
+
+    var act = t.closest('.act');
+    if(act){
+      toggleAct(act.dataset.aid, act.closest('.stage'));
+      return;
+    }
+
+    var seg = t.closest('.sseg button');
+    if(seg){
+      var sid = seg.closest('.sseg').dataset.sid;
+      S.stages[sid] = seg.dataset.v;
+      save();
+      updateSchedule();
+      return;
+    }
+
+    var shead = t.closest('.shead');
+    if(shead){
+      var stage = shead.closest('.stage');
+      var sid2 = stage.dataset.sid;
+      var open = !stage.classList.contains('open');
+      stage.classList.toggle('open', open);
+      if(open) S.ui.openStages[sid2] = true; else delete S.ui.openStages[sid2];
+      saveSoon();
+      return;
+    }
+
+    var go = t.closest('.prgo');
+    if(go){ gotoItem(go.dataset.go); return; }
+
+    if(t.closest('#probBtn')){ renderProblems(); openSheet('sheetProblems'); return; }
+    if(t.closest('#closeProb')){ closeSheets(); return; }
+    if(t.closest('#menuBtn')){
+      $('#menuNote').textContent = '点击圆圈标记完成；长按条目或点「整改」标记待整改。状态与备注仅保存在当前浏览器。';
+      openSheet('menuSheet');
+      return;
+    }
+    if(t.closest('#closeMenu')){ closeSheets(); return; }
+    if(t.closest('#btnCopy')){ copyText(problemsText(), '问题清单已复制'); return; }
+    if(t.closest('#btnCsv')){ exportCsv(); return; }
+    if(t.closest('#btnPrintProb')){
+      document.body.classList.add('printing-problems');
+      setTimeout(function(){ window.print(); }, 30);
+      return;
+    }
+    if(t.closest('#menuPrint')){ closeSheets(); setTimeout(function(){ window.print(); }, 120); return; }
+    if(t.closest('#menuGuide')){
+      $('#menuNote').textContent = '1. 点击条目左侧圆圈 = 标记完成，再点一次取消；2. 长按条目或点「整改」= 标记待整改，可填写位置、数量、期限；3. 顶部圆环显示两个清单的总进度；4. 数据仅保存在当前浏览器，换设备或清缓存会丢失，建议定期导出 CSV 备份。';
+      return;
+    }
+    if(t.closest('#menuReset')){
+      closeSheets();
+      $('#confirmDlg').classList.add('on');
+      lock(true);
+      return;
+    }
+    if(t.closest('#cancelReset')){
+      $('#confirmDlg').classList.remove('on');
+      lock(false);
+      return;
+    }
+    if(t.closest('#doReset')){
+      localStorage.removeItem(KEY);
+      location.reload();
+      return;
+    }
+
+    var sheet = t.closest('.sheet');
+    if(sheet && t === sheet){ closeSheets(); }
+  });
+
+  document.addEventListener('input', function(e){
+    var inp = e.target.closest('.notes input');
+    if(!inp) return;
+    var item = inp.closest('.item');
+    var id = item.dataset.id;
+    var n = S.notes[id] || {loc:'', qty:'', due:''};
+    n[inp.dataset.f] = inp.value;
+    if(!n.loc && !n.qty && !n.due) delete S.notes[id];
+    else S.notes[id] = n;
+    notePrint(item);
+    saveSoon();
+  });
+
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('printing-problems');
+  });
+
+  // 初始化
+  $$('.filters button').forEach(function(b){});
+  MODS.forEach(function(m){ applyFilter(m); });
+  updateProgress();
+  updateSchedule();
+  switchTab(S.ui.tab);
+  MODS.forEach(function(m){ D.modules[m].groups.forEach(function(g){ g.items.forEach(function(it){ refreshItem(it.id); }); }); });
+})();
+</script>
+</body>
+</html>
