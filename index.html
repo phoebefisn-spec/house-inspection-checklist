@@ -414,6 +414,10 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .sbtn.danger-text{color:var(--red)}
 @media print{ .appbar,#apFilters,#apSheet{display:none!important} .appc{cursor:default} }
 @media print{ #syncBar{display:none!important} }
+@keyframes rspin{to{transform:rotate(360deg)}}
+#refreshBtn.loading svg{animation:rspin .9s linear infinite}
+#refreshBtn:disabled{opacity:.6}
+@media print{ #refreshBtn{display:none!important} }
 </style>
 </head>
 <body>
@@ -434,6 +438,9 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <button class="iconbtn" id="probBtn" aria-label="问题清单">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5h11l-1.6 3 1.6 3H5"/></svg>
         <span class="badgecount" id="probCount" hidden>0</span>
+      </button>
+      <button class="iconbtn" id="refreshBtn" aria-label="刷新同步" title="从云端刷新">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5v5.5H15"/></svg>
       </button>
       <button class="iconbtn" id="menuBtn" aria-label="更多">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -669,6 +676,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 (function(){
   'use strict';
   var KEY = 'xf_manage_v1';
+  // 运行时本地预览（内存 map，不写入 localStorage）：刚上传的照片先用本地 blob 立即显示。
+  // 注意：必须在首次渲染（moduleView/itemHTML）之前初始化，否则 previewUrl 会读到 undefined。
+  var localPreviews = {};
 
   /* ================= 云同步配置 =================
      开通 Supabase 后，把下面两个常量替换为你的项目值即可启用多人共享；
@@ -720,6 +730,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   S.apps = S.apps || {}; S.actNotes = S.actNotes || {}; S.stageNotes = S.stageNotes || {}; S.lastMod = S.lastMod || {};
   S.costs = S.costs || {}; S.actPhotos = S.actPhotos || {};
   S.photoQueue = S.photoQueue || [];
+  S.budget = Number(S.budget) || 0;  // 本次装修总预算（独立于费用台账，自动扣减已付）
   S.ui.appFilter = S.ui.appFilter || 'all';
   S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
@@ -1098,7 +1109,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     // 照片按钮: 展开或已有照片时显示
     var open = el.classList.contains('open');
-    var phCnt = (S.notes[id]?.photos || []).length;
+    var phCnt = photosOf(id).length;
     var pendingCnt = (S.photoQueue || []).filter(function(q){ return q.k === id; }).length;
     var ops = el.querySelector('.photoOps');
     if((open || phCnt > 0 || pendingCnt > 0) && !ops){
@@ -1116,7 +1127,39 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     } else if(ops && !open && phCnt === 0 && pendingCnt === 0){
       ops.remove();
     }
+    refreshPhotoStrips(el, id);
     notePrint(el);
+  }
+
+  // 重建条目里的缩略图条（上传/删除后无需重进页面即可看到变化）
+  function refreshPhotoStrips(el, id){
+    $$('.pstrip', el).forEach(function(s){ s.remove(); });
+    var notes = el.querySelector('.notes');
+    // 整改前：放在备注/notes 之前
+    var bHtml = photosHtml(id, 'before');
+    if(bHtml){
+      var wrapB = document.createElement('div');
+      wrapB.innerHTML = bHtml;
+      var bNode = wrapB.firstElementChild;
+      if(bNode){
+        var nrmk = el.querySelector('.nrmk');
+        if(nrmk) nrmk.before(bNode);
+        else if(notes) notes.before(bNode);
+        else { var body = el.querySelector('.ibody'); if(body) body.appendChild(bNode); }
+      }
+    }
+    // 复验后：放在 photoOps 之后
+    var aHtml = photosHtml(id, 'after');
+    if(aHtml){
+      var wrapA = document.createElement('div');
+      wrapA.innerHTML = aHtml;
+      var aNode = wrapA.firstElementChild;
+      if(aNode){
+        var ops2 = el.querySelector('.photoOps');
+        if(ops2) ops2.after(aNode);
+        else if(notes) notes.appendChild(aNode);
+      }
+    }
   }
 
   function setStatus(id, st){
@@ -1367,11 +1410,17 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
     });
     // 汇总文字
+    var bud = Number(S.budget) || 0;
+    var rem = bud - sumPaid;
+    var pct = bud ? Math.min(100, Math.round(sumPaid / bud * 100)) : 0;
+    var budgetRow = bud
+      ? '总预算 <b id="budgetEdit" style="cursor:pointer;border-bottom:1px dashed var(--line)" title="点我修改">' + fmtMoney(bud) + '</b> · 已付 <b>' + fmtMoney(sumPaid) + '</b> · <b style="color:' + (rem < 0 ? 'var(--red)' : (rem < bud*0.1 ? 'var(--warn, orange)' : 'var(--ok, green)')) + '">剩余 ' + fmtMoney(rem) + '</b> · 使用率 <b>' + pct + '%</b>'
+      : '<b id="budgetEdit" style="cursor:pointer;color:var(--muted);border-bottom:1px dashed var(--line)" title="点我设置本次装修总预算">＋ 设置总预算（自动扣减已付）</b>';
     var catHtml = Object.keys(byCat).map(function(k){ return esc(k) + ' ' + fmtMoney(byCat[k]); }).join('，');
     if(!catHtml) catHtml = '（暂无数据）';
     $('#stats-cost').innerHTML =
-      '已付 <b>' + fmtMoney(sumPaid) + '</b> · 待付 <b>' + fmtMoney(sumWait) + '</b> · 已退 <b>' + fmtMoney(sumRef) + '</b><br>' +
-      '本月已付 ' + fmtMoney(sumMonth) + '<br>' +
+      budgetRow + '<br>' +
+      '待付 <b>' + fmtMoney(sumWait) + '</b> · 已退 <b>' + fmtMoney(sumRef) + '</b> · 本月已付 <b>' + fmtMoney(sumMonth) + '</b><br>' +
       '按类别：' + catHtml;
     var f = S.ui.costStatus || 'all';
     var list = cids.filter(function(id){ return f === 'all' || S.costs[id].status === f; });
@@ -1966,6 +2015,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(go){ gotoItem(go.dataset.go); return; }
 
     if(t.closest('#probBtn')){ renderProblems(); openSheet('sheetProblems'); return; }
+    if(t.closest('#refreshBtn')){ manualRefresh(); return; }
     if(t.closest('#closeProb')){ closeSheets(); return; }
     if(t.closest('#menuBtn')){
       $('#menuNote').textContent = CLOUD_ON
@@ -2018,6 +2068,19 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(costf){ S.ui.costStatus = costf.dataset.f; save(); renderCosts(); return; }
     if(t.closest('#costAdd')){ openCostEditor(null); return; }
     if(t.closest('#costCsv')){ exportCostsCsv(); return; }
+    if(t.closest('#budgetEdit')){
+      // 点总预算数字 → 弹出 prompt 编辑。用原生 prompt 就够，预算不是高频操作
+      var cur = S.budget ? String(S.budget) : '';
+      var v = prompt('设置本次装修总预算（¥）', cur);
+      if(v === null) return;
+      var n = Number(String(v).replace(/[¥,\s]/g,''));
+      if(!isFinite(n) || n < 0){ toast('请输入一个不小于 0 的金额'); return; }
+      S.budget = Math.round(n * 100) / 100;
+      save();
+      renderCosts();
+      toast('总预算已更新');
+      return;
+    }
     var nrmkToggle = t.closest('.nrmk .toggle');
     if(nrmkToggle){
       var nrmkBox = nrmkToggle.parentElement;
@@ -2249,6 +2312,11 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     // 相对 path → 拼接 storage 公共地址
     return storagePublicUrl(p);
   }
+  // 运行时本地预览（内存 map，不写入 localStorage）：刚上传的照片先用本地 blob 立即显示
+  function previewUrl(p){
+    if(!p) return '';
+    return localPreviews[p] || photoUrl(p);
+  }
 
   // Canvas 压缩：max 1280px edge, JPEG.quality. 若 >5MB 先拒，>1.5MB 降质量重试
   function compressImage(file){
@@ -2416,19 +2484,57 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     save();
   }
 
-  function removePhotoFromItem(itemKey, idx){
+  // 尝试删除 Storage 原文件。anon key 通常没有 delete 策略 → 403/4xx，静默跳过，不打扰用户
+  function deleteStorageSilently(path){
+    if(!path || /^https?:\/\//.test(path)) return;
+    var enc = path.split('/').map(function(s){ return encodeURIComponent(s); }).join('/');
+    try{
+      fetch(storageUrl() + '/object/' + STORAGE_BUCKET + '/' + enc, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+      }).then(function(r){
+        if(!r.ok) console.warn('[photo] Storage 删除被拒绝 HTTP ' + r.status + '（anon 无 delete 策略，已静默跳过）');
+      }).catch(function(e){ console.warn('[photo] Storage 删除失败（已静默跳过）：' + e.message); });
+    }catch(_){}
+  }
+
+  // 删除照片：按 path 清除该条目下所有引用（photos 数组及其它数组字段），并立即持久化
+  function removePhotoFromItem(itemKey, idx, path){
+    var list = photosOf(itemKey);
+    var target = path || (list[idx] && list[idx].p);
+    if(!target && !list.length){ toast('照片已不存在'); return; }
+    var removed = 0;
+    function stripArr(arr){
+      if(!Array.isArray(arr)) return;
+      for(var i = arr.length - 1; i >= 0; i--){
+        var it = arr[i];
+        var itPath = (typeof it === 'string') ? it : (it && it.p);
+        if(target ? (itPath === target) : (i === idx)){
+          arr.splice(i, 1); removed++;
+        }
+      }
+    }
     if(itemKey.indexOf('app:') === 0){
-      var uid = itemKey.slice(4);
-      if(S.apps[uid] && S.apps[uid].photos && S.apps[uid].photos[idx]){ S.apps[uid].photos.splice(idx,1); }
+      var app = S.apps[itemKey.slice(4)];
+      if(app) stripArr(app.photos);
     } else if(itemKey.indexOf('-') > 0){
-      if(S.actPhotos && S.actPhotos[itemKey] && S.actPhotos[itemKey][idx]){ S.actPhotos[itemKey].splice(idx,1); }
+      stripArr(S.actPhotos && S.actPhotos[itemKey]);
     } else {
-      if(S.notes[itemKey] && S.notes[itemKey].photos && S.notes[itemKey].photos[idx]){ S.notes[itemKey].photos.splice(idx,1); }
+      var note = S.notes[itemKey];
+      if(note){
+        // note 里所有数组字段都检查（photos / 历史遗留的 revBefore、revAfter 等）
+        Object.keys(note).forEach(function(k){ stripArr(note[k]); });
+      }
     }
     setLastMod(itemKey, room ? room.nick || '' : '', Date.now());
     markDirty(itemKey);
-    save();
-    toast('已从本地移除（Storage 里原文件未删，如需清理请在 Supabase Dashboard 操作）');
+    save();  // save() 内部会 pushSoon() → 900ms 内写回 Supabase
+    if(removed){
+      toast('已删除照片（云端原文件需在 Supabase Dashboard 清理）');
+      deleteStorageSilently(target);
+    } else {
+      toast('照片已不存在');
+    }
   }
 
   function photosOf(itemKey){
@@ -2445,9 +2551,10 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   function photosHtml(itemKey, phaseFilter){
     var list = photosOf(itemKey);
     if(!list.length) return '';
-    return '<div class="pstrip">' + list.map(function(p,i){
+    var cls = 'pstrip' + (phaseFilter ? ' pstrip-' + phaseFilter : '');
+    return '<div class="' + cls + '">' + list.map(function(p,i){
       if(phaseFilter && p.ph !== phaseFilter) return '';
-      var src = photoUrl(p.p);
+      var src = previewUrl(p.p);
       return '<button type="button" class="pthumb" data-key="' + itemKey + '" data-i="' + i + '" aria-label="查看照片">' +
         '<img loading="lazy" src="' + src + '" alt="photo" onerror="this.onerror=null;var d=Object.assign(document.createElement(\'div\'),{className:\'pfallback\',title:\'加载失败，点击重试\',textContent:\'!\'});this.replaceWith(d);"></button>';
     }).join('') + '</div>';
@@ -2467,6 +2574,14 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       var blob2 = await compressImage(fileList[0]);
       var res = await uploadPhoto(blob2);
       if(res){
+        // 乐观显示：先用本地 blob 立即渲染，等 Storage 就绪后自然回落到对象 URL
+        try{
+          localPreviews[res.path] = URL.createObjectURL(blob2);
+          setTimeout(function(){
+            try{ URL.revokeObjectURL(localPreviews[res.path]); }catch(_){}
+            delete localPreviews[res.path];
+          }, 20000);
+        }catch(_){}
         appendPhotoToItem(itemKey, phase, res);
         toast('照片已上传 ✓');
         refreshAllFromState();
@@ -2507,19 +2622,30 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(!list.length){ closeGallery(); return; }
     var p = list[galleryState.i];
     var img = g.querySelector('#gImg');
-    img.src = photoUrl(p.p) + (photoUrl(p.p).indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now(); // cache bust
+    var bust = function(){
+      var base = previewUrl(p.p);
+      if(localPreviews[p.p]) return base; // blob URL 不能加查询参数
+      return base + (base.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now(); // cache bust
+    };
+    img.src = bust();
     g.querySelector('#gMeta').textContent = (galleryState.i+1) + '/' + list.length + ' · ' + phaseLabel(p.ph) + (p.t ? ' · ' + fmtTimeAgo(p.t) : '');
     g.querySelector('#gDel').hidden = false;
     img.onerror = function(){
       toast('图片加载失败（可能是 bucket 策略未生效或网络问题），点击重试');
-      // 重试：加时间戳防止缓存
-      img.src = photoUrl(p.p) + '?_=' + Date.now();
+      img.src = bust();
     };
   }
   function galleryDelete(){
+    // 关键：showConfirm 会调用 closeSheets() → closeGallery()，
+    // 把 galleryState 重置为 {k:'', i:0}。所以必须在弹框前先快照目标。
+    var key = galleryState.k, idx = galleryState.i;
+    var list = photosOf(key);
+    var path = list[idx] && list[idx].p;
+    if(!key || (!path && !list.length)) return;
     showConfirm('删除这张照片？', '只能从本地 note 移除，Storage 里原文件不会自动删除（请在 Supabase Dashboard 清理）', '删除', function(){
-      removePhotoFromItem(galleryState.k, galleryState.i);
-      closeGallery(); refreshAllFromState();
+      removePhotoFromItem(key, idx, path);
+      closeGallery();
+      refreshAllFromState();
     });
   }
 
@@ -2705,11 +2831,12 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     pushTimer = setTimeout(pushNow, 900);
   }
   function pushNow(){
-    if(!CLOUD_ON || !room || syncing) return;
-    if(!room.nick){ setSyncUI('warn', '未填昵称，暂未同步（请点顶部同步条设置昵称）'); return; }
+    if(!CLOUD_ON || !room) return Promise.resolve(false);
+    if(syncing) return Promise.resolve(false);
+    if(!room.nick){ setSyncUI('warn', '未填昵称，暂未同步（请点顶部同步条设置昵称）'); return Promise.resolve(false); }
     var ids = Object.keys(dirty);
-    if(!ids.length) return;
-    if(!navigator.onLine){ setSyncUI('warn', '离线中，改动已缓存，联网后自动同步'); return; }
+    if(!ids.length) return Promise.resolve(true);
+    if(!navigator.onLine){ setSyncUI('warn', '离线中，改动已缓存，联网后自动同步'); return Promise.resolve(false); }
     var ts = new Date().toISOString();
     var rows = ids.map(function(id){
       var r = localRow(id);
@@ -2717,31 +2844,37 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     });
     syncing = true;
     setSyncUI('warn', '同步中…');
-    api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)})
+    return api('items_state', {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)})
       .then(function(){
-        ids.forEach(function(id){ delete dirty[id]; meta.seen[id] = ts; });
+        ids.forEach(function(id){
+          delete dirty[id];
+          meta.seen[id] = ts;
+        });
         saveMeta();
         syncing = false;
         lastSyncAt = Date.now();
         setSyncUI('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
+        return true;
       })
-      .catch(function(e){ syncing = false; syncFail(e); });
+      .catch(function(e){ syncing = false; syncFail(e); return false; });
   }
   function pullNow(){
-    if(!CLOUD_ON || !room || syncing) return;
-    if(!navigator.onLine){ setSyncUI('warn', '离线中'); return; }
+    if(!CLOUD_ON || !room) return Promise.resolve(false);
+    if(syncing) return Promise.resolve(false);
+    if(!navigator.onLine){ setSyncUI('warn', '离线中'); return Promise.resolve(false); }
     syncing = true;
     setSyncUI('warn', '同步中…');
-    api('items_state?room_id=eq.' + encodeURIComponent(room.code) + '&select=item_id,status,note,updated_at,updated_by')
+    return api('items_state?room_id=eq.' + encodeURIComponent(room.code) + '&select=item_id,status,note,updated_at,updated_by')
       .then(function(rows){
         var changed = false;
         applyingRemote = true;
         (rows || []).forEach(function(row){
+          // 本地待同步的改动优先：直接跳过，避免 8 秒轮询把刚删除/刚上传的本地状态覆盖回去
+          if(dirty[row.item_id]) return;
           var seen = meta.seen[row.item_id];
           if(!seen || row.updated_at > seen){
             applyRemoteRow(row);
             meta.seen[row.item_id] = row.updated_at;
-            if(dirty[row.item_id]) delete dirty[row.item_id];
             changed = true;
           }
         });
@@ -2753,10 +2886,14 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         if(changed) refreshAllFromState();
         setSyncUI('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
         if(Object.keys(dirty).length) pushSoon();
+        return true;
       })
-      .catch(function(e){ syncing = false; syncFail(e); });
+      .catch(function(e){ syncing = false; syncFail(e); return false; });
   }
-  function syncCycle(){ pushNow(); pullNow(); setTimeout(processPhotoQueue, 500); }
+  function syncCycle(){
+    // 串行：先推送本地改动，再拉取；避免 push/pull 抢同一个 syncing 锁导致拉取被跳过
+    pushNow().then(function(){ return pullNow(); }).then(function(){ setTimeout(processPhotoQueue, 500); });
+  }
   function startPolling(){
     stopPolling();
     pollTimer = setInterval(function(){
@@ -2765,6 +2902,32 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }, 8000);
   }
   function stopPolling(){ clearInterval(pollTimer); pollTimer = 0; }
+  // 手动刷新：重置轮询计时、等待当前写入结束、只拉一次，不与轮询并发
+  var manualRefreshing = false;
+  function setRefreshLoading(on){
+    var b = $('#refreshBtn');
+    if(!b) return;
+    b.classList.toggle('loading', !!on);
+    b.disabled = !!on;
+  }
+  function manualRefresh(){
+    if(!CLOUD_ON || !room){ toast('当前是本地模式，数据已保存在本机，无需刷新'); return; }
+    if(manualRefreshing) return;
+    if(!navigator.onLine){ toast('离线中，无法刷新'); return; }
+    manualRefreshing = true;
+    setRefreshLoading(true);
+    startPolling(); // 重置 8 秒计时
+    var tries = 0;
+    (function waitIdle(){
+      if(syncing && tries++ < 25){ return setTimeout(waitIdle, 200); }
+      pushNow().then(function(){ return pullNow(); }).then(function(ok){
+        manualRefreshing = false;
+        setRefreshLoading(false);
+        if(ok) toast('已刷新');
+        else toast('刷新未完成，请查看顶部同步状态');
+      });
+    })();
+  }
   document.addEventListener('visibilitychange', function(){
     if(!document.hidden && CLOUD_ON && room){ syncCycle(); processPhotoQueue(); }
   });
