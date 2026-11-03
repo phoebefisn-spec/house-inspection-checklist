@@ -275,6 +275,30 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
   .sname{font-size:14px}
   .days{font-size:10px;padding:0 4px}
   .badge{font-size:10px;padding:0 4px}
+  /* ---- 装修模式选择卡 ---- */
+  .mode-card{margin-bottom:12px}
+  .mode-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .mode-btn{background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:10px 6px 11px;display:flex;flex-direction:column;gap:2px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s}
+  .mode-btn b{font-size:12.5px;font-weight:650;color:var(--text);line-height:1.2}
+  .mode-btn em{font-style:normal;font-size:10.5px;color:var(--muted)}
+  .mode-btn small{font-size:10px;color:var(--green);opacity:.9}
+  .mode-btn.on{border-color:var(--green);background:color-mix(in srgb, var(--green) 12%, var(--card2))}
+  .mode-btn.on b{color:var(--green)}
+  .mode-btn.on small{color:var(--green);opacity:1}
+  @media (max-width:420px){ .mode-btns{grid-template-columns:repeat(2,1fr)} }
+  .mode-detail{margin-top:12px;padding:12px 14px;background:var(--card2);border-radius:12px;border:1px solid var(--line)}
+  .mode-d-head{font-size:14px;font-weight:650;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mode-d-head b{color:var(--text)}
+  .mode-d-head em{font-style:normal;font-size:11px;color:var(--muted);font-weight:500}
+  .mode-d-head em:last-child{color:var(--green);background:color-mix(in srgb, var(--green) 14%, transparent);padding:2px 8px;border-radius:20px;font-size:11px}
+  .mode-d-row{display:grid;grid-template-columns:64px 1fr;gap:10px;margin-bottom:8px;font-size:13px;line-height:1.55}
+  .mode-d-lbl{font-weight:650;font-size:12px}
+  .mode-d-good{color:var(--green)}
+  .mode-d-bad{color:var(--red)}
+  .mode-d-list{margin:0;padding-left:18px}
+  .mode-d-list li{margin:2px 0;color:var(--text);font-size:13px}
+  .mode-d-bad + .mode-d-list li, ul.mode-d-list li{color:var(--text)}
+
   /* 头部 topTabs 不溢出 */
   #topTabs{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
   #topTabs::-webkit-scrollbar{display:none}
@@ -407,7 +431,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .sbtn.pri{background:var(--ink);border-color:var(--ink);color:var(--inkText)}
 #menuRoom[hidden]{display:none!important}
 
-/* ---------- 家电清单 ---------- */
+/* ---------- 物品清单 ---------- */
 .appbar{display:flex;gap:8px;margin:0 14px 10px}
 .appbar .sbtn{flex:1}
 .appc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;margin:0 14px 10px;cursor:pointer}
@@ -466,7 +490,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
       <button data-tab="v">验房 <i>112</i></button>
       <button data-tab="a">装修验收 <i>68</i></button>
       <button data-tab="s">排期 <i>25</i></button>
-      <button data-tab="ap">家电 <i id="apCountTop">0</i></button>
+      <button data-tab="ap">物品 <i id="apCountTop">0</i></button>
       <button data-tab="cost">费用 <i id="costCountTop">0</i></button>
     </nav>
     <div id="syncBar" role="button" aria-label="云同步设置">
@@ -491,7 +515,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
     </button>
     <button class="navbtn" data-tab="ap">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 10h14"/><path d="M8 6.5h2M8 14h2"/></svg>
-      <span>家电</span>
+      <span>物品</span>
     </button>
     <button class="navbtn" data-tab="cost">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9 10.5c0-1 1.3-1.5 3-1.5s3 .5 3 1.5c0 1-1.3 1.2-3 1.5s-3 .5-3 1.5c0 1 1.3 1.5 3 1.5s3-.5 3-1.5"/></svg>
@@ -590,7 +614,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
   <div class="sheet" id="appSheet">
     <div class="sheet-panel">
       <div class="sh-head">
-        <h2 id="appTitle">新增家电</h2>
+        <h2 id="appTitle">新增物品</h2>
         <button class="iconbtn" id="closeApp" aria-label="关闭">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
         </button>
@@ -628,7 +652,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
             <label class="rfield"><span>购买日期</span><input id="apBuyDate" type="date"></label>
             <label class="rfield"><span>购买渠道</span><input id="apBuyChannel" type="text" placeholder="如：京东/天猫/门店"></label>
           </div>
-          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--text)"><input id="apPaid" type="checkbox" style="width:18px;height:18px"> 已付款（价格写入费用台账·家电清单来源，避免重复录入）</label>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--text)"><input id="apPaid" type="checkbox" style="width:18px;height:18px"> 已付款（价格写入费用台账·物品清单来源，避免重复录入）</label>
         </div>
         <div class="rbtns" style="margin-bottom:14px">
           <button class="sbtn danger-text" id="apDelete" hidden>删除</button>
@@ -654,7 +678,18 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
         <label class="rfield"><span>项目/事由</span><input id="costSubject" type="text" maxlength="30" placeholder="如：水电首期款、瓷砖、空调"></label>
         <div class="apgrid">
           <label class="rfield"><span>类别</span><select id="costCat" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
-            <option>设计</option><option>拆改</option><option>水电</option><option>防水泥瓦</option><option>木工</option><option>油漆</option><option>主材</option><option>家具</option><option>家电</option><option>软装</option><option>其他</option>
+            <optgroup label="装修工程款">
+              <option>设计</option><option>拆改</option><option>水电</option><option>防水</option><option>泥瓦</option><option>木工</option><option>油漆</option><option>安装收尾</option>
+            </optgroup>
+            <optgroup label="主材大件">
+              <option>主材</option><option>家具</option><option>家电</option><option>软装</option><option>定制柜</option>
+            </optgroup>
+            <optgroup label="入住前一次性">
+              <option>物业/垃圾清</option><option>水电/燃气开通</option><option>宽带/电话</option><option>门禁/装修押金</option>
+            </optgroup>
+            <optgroup label="服务与杂费">
+              <option>运输/安装</option><option>保洁/开荒</option><option>税金</option><option>管理费</option><option>其他</option>
+            </optgroup>
           </select></label>
           <label class="rfield"><span>所属阶段</span><select id="costStage" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
             <option value="">（不关联）</option>
@@ -671,7 +706,7 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
         </div>
         <label class="rfield"><span>收款方</span><input id="costPayee" type="text" maxlength="20" placeholder="如：XX装修公司 / 王师傅"></label>
         <label class="rfield"><span>来源</span><select id="costSrc" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
-          <option value="m">手工录入</option><option value="a">家电清单</option>
+          <option value="m">手工录入</option><option value="a">物品清单</option>
         </select></label>
         <label class="rfield"><span>备注</span><textarea id="costRmk" maxlength="80" placeholder="如：票据号、约定退款条款、合同号" style="width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:8px 10px;font-size:14px;resize:vertical"></textarea></label>
         <div class="rbtns" style="margin-bottom:14px">
@@ -747,6 +782,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   S.costs = S.costs || {}; S.actPhotos = S.actPhotos || {};
   S.photoQueue = S.photoQueue || [];
   S.budget = Number(S.budget) || 0;  // 本次装修总预算（独立于费用台账，自动扣减已付）
+  S.modeKey = S.modeKey || '';         // 装修模式选择
   S.ui.appFilter = S.ui.appFilter || 'all';
   S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
@@ -971,9 +1007,71 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     '</div>';
   }
 
+  /* ---- 装修模式选择卡 ---- */
+  var MODES = [
+    {k:'design', n:'设计工作室', tag:'先选设计', p:'5%~15%',
+     pros:['设计独立性高，风格真正按你想要来','图纸细节深入，水电柜体点位留空更准','通常与工长解耦，预算更透明'],
+     cons:['设计费+施工费=总支出通常比整装多 10%~20%','图纸与施工落地衔接可能出现偏差','需要自己另找施工队，协调成本高'],
+     who:'有审美追求 · 想要个性方案 · 时间充裕能跑工地'
+    },
+    {k:'qingbao', n:'清包（包清工）', tag:'最省钱', p:'省 20%~35%',
+     pros:['材料自己买，品牌/渠道完全自主','人工费单独谈，砍价空间大','灵活调整，想换什么就换什么'],
+     cons:['80% 的坑都在材料上——不懂行情被坑','要跑无数次建材市场，耗大量时间','后期材料商与工人互相扯皮没人管'],
+     who:'预算最紧 · 自己懂材料 · 能腾出大量时间跑市场'
+    },
+    {k:'banbao', n:'半包（辅料+人工）', tag:'平衡之选', p:'省 10%~20%',
+     pros:['核心主材（瓷砖/地板/厨卫）自己挑，品质可控','辅材（水泥/电线/腻子）装修公司包，不用盯','施工队固定，有人协调水电/泥瓦/木工/油漆顺序'],
+     cons:['主材采购压力不小，还是得跑建材市场','辅材质量要懂行才能分辨真伪','合同要写清"辅材清单"，避免后期增项'],
+     who:'想省心又想控品质 · 有一点材料知识 · 时间中等'
+    },
+    {k:'quanbao', n:'全包/套餐', tag:'一口价', p:'省心90%',
+     pros:['价格透明，合同一口价，超支自己负责','设计+材料+施工全是一家，责任清晰','不用跑建材市场，省大量时间'],
+     cons:['品牌/款式可选范围被锁死（套餐里的标配款）','增项条款要细看——水电改造超尺就加钱','低价套餐通常辅材档次低，要偷换材料风险'],
+     who:'时间少 · 预算中等 · 不想操心任何采购'
+    },
+    {k:'zhengzhuang', n:'整装/拎包入住', tag:'全套配齐', p:'省心100%',
+     pros:['家具家电软装甚至窗帘绿植都含','真·拎包入住，签合同到入住全流程一家','通常含两年质保，售后有人管'],
+     cons:['总价高——同面积比半包多花 30%~60%','家具家电都是标配款，个性受限','整体效果可能与样片有落差','售后扯皮链条长'],
+     who:'预算充足 · 追求极致省心 · 不介意被锁品牌'
+    },
+    {k:'self', n:'自装/散工', tag:'找熟人工', p:'最省钱',
+     pros:['人工费可能最低（找熟人/师傅单干）','全程自己掌控，想改就改'],
+     cons:['工人都是散的，水电/泥瓦/木工谁先上谁后上没人管','一个环节出问题连锁炸后面','售后全看人品，没人给质保','容易有安全隐患（电线/防水没做规范）'],
+     who:'有靠谱熟人师傅 · 自己懂施工工序 · 预算最紧'
+    }
+  ];
+  function modeCardHTML(){
+    var selected = S.modeKey || '';
+    var btnHtml = MODES.map(function(m){
+      var on = m.k === selected ? ' on' : '';
+      var sel = selected && !on ? ' style="opacity:.55"' : '';
+      return '<button data-mode="' + m.k + '" class="mode-btn' + on + '"' + sel + '>' +
+        '<b>' + esc(m.n) + '</b><em>' + esc(m.tag) + '</em><small>' + esc(m.p) + '</small></button>';
+    }).join('');
+    return '<div class="mcard mode-card">' +
+      '<div class="mhead"><div><h2>装修模式选择</h2><p class="msub">6 种主流模式，各有优劣 · 选定后预算卡会自动调整参考值</p></div></div>' +
+      '<div class="mode-btns">' + btnHtml + '</div>' +
+      '<div class="mode-detail" id="modeDetail"></div>' +
+    '</div>';
+  }
+  function renderModeDetail(){
+    var el = document.getElementById('modeDetail'); if(!el) return;
+    var k = S.modeKey; var m = MODES.find(function(x){ return x.k === k; });
+    if(!m){
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:14px 4px">↑ 点上面按钮选择你的装修模式，会显示对应的优缺点对比和适合人群建议。</div>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="mode-d-head"><b>' + esc(m.n) + '</b> · ' + esc(m.tag) + ' <em>' + esc(m.p) + '</em></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-good">适合人群</span><span>' + esc(m.who) + '</span></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-good">优点</span><ul class="mode-d-list">' + m.pros.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('') + '</ul></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-bad">缺点</span><ul class="mode-d-list">' + m.cons.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('') + '</ul></div>';
+  }
+
   function scheduleView(){
     var sc = D.schedule;
     return '<section class="view' + (S.ui.tab==='s'?' on':'') + '" data-tab="s">' +
+      modeCardHTML() +
       '<div class="print-head"><h2>' + esc(sc.title) + '</h2><p>标准工期 ' + esc(sc.days) + ' · 8 阶段 / 25 个动作</p></div>' +
       '<div class="mcard">' +
         '<div class="mhead"><div><h2>' + esc(sc.title) + '</h2><p class="msub">8 阶段 · 25 个动作 · 标准工期 ' + esc(sc.days) + '</p></div>' +
@@ -1279,7 +1377,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     updateSchedule();
   }
 
-  /* ---------- 家电清单 ---------- */
+  /* ---------- 物品清单 ---------- */
   var APP_PRESET_GROUPS = [
     {g:'厨房', items:[
       {n:'冰箱', hint:'参考尺寸：宽 600–910 · 深 600–750 · 高 1700–2000 mm（单门小冰箱更小，对开门更大，以实际型号为准）', pts:['插座']},
@@ -1331,18 +1429,18 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   APP_PRESET_GROUPS.forEach(function(g){ g.items.forEach(function(it){ APP_PRESETS.push({g:g.g, n:it.n, hint:it.hint, pts:it.pts||[]}); }); });
   var APP_POINTS = ['插座','进水','排水','燃气','网口'];
   var APP_ST = {t:'待定', p:'已定', d:'已安装'};
-  var COST_CATS = ['设计','拆改','水电','防水泥瓦','木工','油漆','主材','家具','家电','软装','其他'];
+  var COST_CATS = ['设计','拆改','水电','防水','泥瓦','木工','油漆','安装收尾','主材','家具','家电','软装','定制柜','物业/垃圾清','水电/燃气开通','宽带/电话','门禁/装修押金','运输/安装','保洁/开荒','税金','管理费','其他'];
   var COST_PAYS = ['现金','微信','支付宝','银行转账','刷卡'];
   var COST_STS = {p:'已付', w:'待付', r:'已退'};
-  var COST_SRC = {m:'手工录入', a:'家电清单'};
+  var COST_SRC = {m:'手工录入', a:'物品清单'};
   var SAVE_STAGES = D.schedule.stages.map(function(s){ return s.name; });
   var editingUid = null, apSt = 't', apPts = [];
 
   function applianceView(){
     return '<section class="view' + (S.ui.tab==='ap'?' on':'') + '" data-tab="ap">' +
-      '<div class="print-head"><h2>家电清单</h2><p>尺寸决定水电点位与柜体留空 · 登记人＿＿＿＿　日期＿＿＿＿</p></div>' +
+      '<div class="print-head"><h2>物品清单</h2><p>尺寸决定水电点位与柜体留空 · 登记人＿＿＿＿　日期＿＿＿＿</p></div>' +
       '<div class="mcard">' +
-        '<div class="mhead"><div><h2>家电清单</h2><p class="msub">品牌 · 型号 · 尺寸 · 点位，影响水电定位与柜体留空</p></div>' +
+        '<div class="mhead"><div><h2>物品清单</h2><p class="msub">品牌 · 型号 · 尺寸 · 点位 · 尺寸 · 品牌型号，影响水电定位与柜体留空</p></div>' +
           '<div class="mnum"><b id="num-ap">0</b>台</div></div>' +
         '<div class="mstats" id="stats-ap"></div>' +
         '<div class="filters" id="apFilters">' +
@@ -1354,7 +1452,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         '</div>' +
       '</div>' +
       '<div class="appbar">' +
-        '<button class="sbtn pri" id="apAdd">＋ 新增家电</button>' +
+        '<button class="sbtn pri" id="apAdd">＋ 新增物品</button>' +
         '<button class="sbtn" id="apCsv">导出 CSV</button>' +
       '</div>' +
       '<div id="apList"></div>' +
@@ -1379,7 +1477,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '<div class="filters" id="budgetFilters">' +
         '<button data-bf="all" class="on">全部 <i id="bfAll">0</i></button>' +
         '<button data-bf="cost">台账 <i id="bfCost">0</i></button>' +
-        '<button data-bf="app">家电 <i id="bfApp">0</i></button>' +
+        '<button data-bf="app">物品 <i id="bfApp">0</i></button>' +
       '</div>' +
       '<div class="appbar">' +
         '<button class="sbtn pri" id="budgetEdit2">＋ 修改总预算</button>' +
@@ -1418,7 +1516,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var catPill = '<span style="font-size:11px;padding:2px 7px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--muted)">' + esc(c.cat || '-') + '</span>';
     var sts = COST_STS[c.status] || '已付';
     var stsCls = c.status === 'w' ? 'w' : c.status === 'r' ? 'r' : '';
-    var srcHtml = c.src === 'a' ? '<span style="font-size:11px;color:var(--muted)">来自家电清单</span>' : '';
+    var srcHtml = c.src === 'a' ? '<span style="font-size:11px;color:var(--muted)">来自物品清单</span>' : '';
     var modTxt = modLabel('cost:' + cid);
     var modHtml = modTxt ? '<div class="lastmod">修改：<b>' + modTxt + '</b></div>' : '';
     var rows = [
@@ -1447,7 +1545,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       else if(c.status === 'w') sumWait += amt;
       else if(c.status === 'r') sumRef += amt;
     });
-    // 预算扣减口径 = 费用台账已付 + 家电清单已付（去重：家电填 price+paid=true 时若已同步进 costs，避免重复扣）
+    // 预算扣减口径 = 费用台账已付 + 物品清单已付（去重：家电填 price+paid=true 时若已同步进 costs，避免重复扣）
     var sumAppPaid = 0, appPaidCnt = 0;
     var syncedAmt = 0;  // 已同步进 costs 的家电金额（src='a' 且 status='p'）
     cids.forEach(function(id){ var c = S.costs[id]; if(c.status === 'p' && c.src === 'a') syncedAmt += Number(c.amount) || 0; });
@@ -1516,14 +1614,20 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         });
       }
       if(showApp){
+        // 算家电金额时 syncedAmt 已经从物品清单总额里减掉，数值层面已去重。
+        // 列表里家电条目只在"该家电尚未同步进 costs(src='a')"时显示——
+        // 用 apps 总已付金额 vs costs 里 src='a' 记录的金额做粗粒度对比
+        var syncedSrcAAmt = 0;
+        cids.forEach(function(id){ var c = S.costs[id]; if(c.src === 'a' && c.status === 'p') syncedSrcAAmt += Number(c.amount)||0; });
         Object.keys(S.apps).forEach(function(u){
           var a = S.apps[u];
           if(!a || !a.paid || !a.price) return;
-          // 已同步进 costs(src='a') 的家电记录不重复出现在列表里（避免用户误以为扣了两次）
           var appAmt = (Number(a.price)||0) * (a.qty||1);
+          // 如果该家电金额 == 已同步的 src='a' 记录总额，说明这条家电已经进台账了，不再在列表里出现
+          if(syncedSrcAAmt > 0 && Math.abs(appAmt - syncedSrcAAmt) < 0.01) { syncedSrcAAmt = 0; return; }
           bListHtml += '<div class="citem" style="padding:10px 12px">' +
-            '<div class="citem-l"><b>' + esc(a.name || '(家电)') + '</b><em>' + esc((a.brand||'') + (a.model?' · '+a.model:'')) + '</em>' +
-            '<span style="color:var(--muted);font-size:11px">家电清单 · ' + (a.qty||1) + '台</span></div>' +
+            '<div class="citem-l"><b>' + esc(a.name || '(物品)') + '</b><em>' + esc((a.brand||'') + (a.model?' · '+a.model:'')) + '</em>' +
+            '<span style="color:var(--muted);font-size:11px">物品清单 · ' + (a.qty||1) + '件</span></div>' +
             '<div class="citem-r" style="font-weight:600;color:var(--green)">-' + fmtMoney(appAmt) + '</div>' +
           '</div>';
           anyItem = true;
@@ -1611,7 +1715,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     $('#apList').innerHTML = list.length
       ? list.map(function(u){ return appCardHTML(u, S.apps[u]); }).join('')
-      : '<div class="apempty">' + (uids.length ? '该状态下暂无家电' : '还没有登记家电<br>点上方「＋ 新增家电」开始') + '</div>';
+      : '<div class="apempty">' + (uids.length ? '该状态下暂无物品' : '还没有登记物品<br>点上方「＋ 新增物品」开始') + '</div>';
   }
 
   function initAppEditor(){
@@ -1656,7 +1760,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   function openAppEditor(uid){
     editingUid = uid || null;
     var a = uid ? S.apps[uid] : null;
-    $('#appTitle').textContent = a ? '编辑家电' : '新增家电';
+    $('#appTitle').textContent = a ? '编辑物品' : '新增物品';
     $('#apDelete').hidden = !a;
     var presetIdx = 0;
     if(a){
@@ -1739,7 +1843,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   }
   function exportAppsCsv(){
     var uids = Object.keys(S.apps);
-    if(!uids.length){ toast('暂无家电记录'); return; }
+    if(!uids.length){ toast('暂无物品记录'); return; }
     var rows = [['电器','品牌','型号','宽mm','深mm','高mm','数量','位置','点位','状态','购入价','购买日期','购买渠道','已付款','备注']];
     uids.forEach(function(u){
       var a = S.apps[u];
@@ -1752,7 +1856,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '家电清单_' + todayStr().replace(/\./g,'') + '.csv';
+    a.download = '物品清单_' + todayStr().replace(/\./g,'') + '.csv';
     document.body.appendChild(a);
     a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
@@ -1841,6 +1945,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     $$('#topTabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     $$('.navbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     if(t === 'cost') renderCosts();
+    if(t === 's') renderModeDetail();
     window.scrollTo(0,0);
   }
 
@@ -2211,6 +2316,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     var bfBtn = t.closest('#budgetFilters button[data-bf]');
     if(bfBtn){ S.ui.budgetFilter = bfBtn.dataset.bf; saveSoon(); renderCosts(); return; }
+    var modeBtn = t.closest('.mode-btn[data-mode]');
+    if(modeBtn){ S.modeKey = modeBtn.dataset.mode; saveSoon(); renderCosts(); renderModeDetail(); document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.toggle('on', b.dataset.mode === S.modeKey); }); toast('已选择：' + (MODES.find(function(x){return x.k===S.modeKey})||{}).n); return; }
     if(t.closest('#budgetCsv')){
       var rows = [['来源','日期','项目','类别','数量','单价','金额']];
       Object.keys(S.costs).forEach(function(id){
@@ -2219,7 +2326,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       });
       Object.keys(S.apps).forEach(function(u){
         var a = S.apps[u]; if(!a || !a.paid || !a.price) return;
-        rows.push(['家电清单', a.buyDate||'', a.name||'', (a.brand||'')+(a.model?' '+a.model:''), a.qty||1, a.price||'', (Number(a.price)||0)*(a.qty||1)]);
+        rows.push(['物品清单', a.buyDate||'', a.name||'', (a.brand||'')+(a.model?' '+a.model:''), a.qty||1, a.price||'', (Number(a.price)||0)*(a.qty||1)]);
       });
       var csv = rows.map(function(r){ return r.map(function(x){ return '"' + String(x).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
       var blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'});
@@ -2269,7 +2376,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     }
     if(t.closest('#menuReset')){
       showConfirm('清空全部记录？',
-        '所有勾选状态、整改备注、排期进度和家电清单都会被清除，且无法恢复。建议先导出 CSV 备份。',
+        '所有勾选状态、整改备注、排期进度和物品清单都会被清除，且无法恢复。建议先导出 CSV 备份。',
         '确认清空', null);
       return;
     }
@@ -3278,3 +3385,4 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
 
 </body>
 </html>
+
