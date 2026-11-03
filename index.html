@@ -754,6 +754,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   S.ui.filters = Object.assign({}, B.ui.filters, S.ui.filters || {});
   S.ui.costFilter = S.ui.costFilter || 'all';
   S.ui.costStatus = S.ui.costStatus || 'all';
+  S.ui.budgetFilter = S.ui.budgetFilter || 'all';
   S.ui.costSort = S.ui.costSort || 'date-desc';
   S.ui.collapsed = S.ui.collapsed || {};
   S.ui.openItems = S.ui.openItems || {};
@@ -1365,19 +1366,29 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var v = Number(n) || 0;
     return '¥' + v.toFixed(2);
   }
-  // 装修总预算独立卡片（保持 mcard 外框统一，内部大字主视觉）
+  // 装修总预算独立卡片（保持 mcard 外框统一，内部结构与费用台账卡 1:1 对齐）
   function budgetCardHTML(){
     return '<div class="mcard budget-card">' +
       '<div class="mhead">' +
         '<div><h2>装修总预算</h2><p class="msub">每一笔「已付」费用自动扣减剩余</p></div>' +
-        '<div class="mnum" style="display:none"><b id="num-budget"></b></div>' +
+        '<div class="mnum"><b id="num-budget-top">—</b></div>' +
       '</div>' +
       '<div class="b-remaining" id="bRemain"></div>' +
       '<div class="b-pbar"><i id="bFill"></i></div>' +
       '<div class="b-meta" id="bMeta"></div>' +
-      '<div class="b-sub" id="bSub"></div>' +
-      '<div class="mstats" id="stats-budget"></div>' +
-      '<div class="pbar" style="margin-top:8px"><i id="budgetFill"></i></div>' +
+      '<div class="filters" id="budgetFilters">' +
+        '<button data-bf="all" class="on">全部 <i id="bfAll">0</i></button>' +
+        '<button data-bf="cost">台账 <i id="bfCost">0</i></button>' +
+        '<button data-bf="app">家电 <i id="bfApp">0</i></button>' +
+      '</div>' +
+      '<div class="appbar">' +
+        '<button class="sbtn pri" id="budgetEdit2">＋ 修改总预算</button>' +
+        '<button class="sbtn" id="budgetCsv">导出明细</button>' +
+      '</div>' +
+      '<div id="budgetList"></div>' +
+      '<div id="bSub" style="display:none"></div>' +
+      '<div class="mstats" id="stats-budget" style="display:none"></div>' +
+      '<div class="pbar" style="display:none"><i id="budgetFill"></i></div>' +
     '</div>';
   }
   function costView(){
@@ -1448,16 +1459,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var appDeltaPaid = Math.max(0, sumAppPaid - syncedAmt);
     $('#num-cost').textContent = cnt.all;
     $('#costCountTop').textContent = cnt.all;
-    $('#num-budget').textContent = bud ? fmtMoney(bud) : '未设置';
     $$('#costFilters button[data-f]').forEach(function(b){
       b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
     });
-    // 装修总预算卡：大字主视觉渲染
+    // 装修总预算卡：大字主视觉 + filters + 明细列表（结构与费用台账卡 1:1）
     var totalPaidBudget = sumPaid + appDeltaPaid;
     var rem = bud - totalPaidBudget;
     var pct = bud ? Math.min(100, Math.round(totalPaidBudget / bud * 100)) : 0;
     var remCls = rem < 0 ? 'neg' : (rem < bud*0.1 ? 'warn' : 'ok');
+    $('#num-budget-top').textContent = bud ? '剩 ' + fmtMoney(rem) : '未设置';
     if(bud){
       $('#bRemain').textContent = fmtMoney(rem);
       $('#bRemain').className = 'b-remaining ' + remCls;
@@ -1468,17 +1479,59 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         '总预算 <b id="budgetEdit" class="clickable" title="点我修改预算">' + fmtMoney(bud) + '</b>' +
         ' · 已付 <b>' + fmtMoney(totalPaidBudget) + '</b>' +
         ' · 使用率 <b>' + pct + '%</b>';
-      var subTxt = [];
-      if(sumPaid) subTxt.push('台账 ' + fmtMoney(sumPaid));
-      if(appDeltaPaid) subTxt.push('家电 ' + fmtMoney(appDeltaPaid) + (appPaidCnt ? '(' + appPaidCnt + '台)' : ''));
-      $('#bSub').textContent = (subTxt.length ? '来源：' + subTxt.join(' + ') : '暂无已付款项') + '（Storage 原文件需在 Supabase Dashboard 清理）';
     } else {
       $('#bRemain').textContent = '未设置总预算';
       $('#bRemain').className = 'b-remaining';
       $('#bFill').style.width = '0';
       $('#bMeta').innerHTML = '<span id="budgetEdit" class="clickable" title="点我设置本次装修总预算">＋ 点我设置总预算（自动扣减每笔已付）</span>';
-      $('#bSub').textContent = '';
     }
+    // filters 角标
+    var budFilter = S.ui.budgetFilter || 'all';
+    $$('#budgetFilters button[data-bf]').forEach(function(b){
+      b.classList.toggle('on', budFilter === b.dataset.bf);
+    });
+    $('#bfAll').textContent = (sumPaid > 0 || appDeltaPaid > 0) ? fmtMoney(totalPaidBudget) : '0';
+    $('#bfCost').textContent = sumPaid ? fmtMoney(sumPaid) : '0';
+    $('#bfApp').textContent = appDeltaPaid ? fmtMoney(appDeltaPaid) : '0';
+    // budgetList：按当前 filter 渲染来源明细列表
+    var bListHtml = '';
+    var showCost = (budFilter === 'all' || budFilter === 'cost');
+    var showApp  = (budFilter === 'all' || budFilter === 'app');
+    if(!bud){
+      bListHtml = '<div class="empty">尚未设置总预算，点「＋ 修改总预算」开始。</div>';
+    } else if(!showCost && !showApp){
+      bListHtml = '<div class="empty">当前筛选下暂无已付款项。</div>';
+    } else {
+      var anyItem = false;
+      if(showCost){
+        cids.forEach(function(id){
+          var c = S.costs[id];
+          if(c.status !== 'p') return;
+          anyItem = true;
+          bListHtml += '<div class="citem" style="padding:10px 12px">' +
+            '<div class="citem-l"><b>' + esc(c.subject || '(无项目)') + '</b><em>' + esc(c.cat || '') + '</em>' +
+            '<span style="color:var(--muted);font-size:11px">' + esc(c.date || '') + ' · 台账源</span></div>' +
+            '<div class="citem-r" style="font-weight:600;color:var(--green)">-' + fmtMoney(Number(c.amount)||0) + '</div>' +
+          '</div>';
+        });
+      }
+      if(showApp){
+        Object.keys(S.apps).forEach(function(u){
+          var a = S.apps[u];
+          if(!a || !a.paid || !a.price) return;
+          // 已同步进 costs(src='a') 的家电记录不重复出现在列表里（避免用户误以为扣了两次）
+          var appAmt = (Number(a.price)||0) * (a.qty||1);
+          bListHtml += '<div class="citem" style="padding:10px 12px">' +
+            '<div class="citem-l"><b>' + esc(a.name || '(家电)') + '</b><em>' + esc((a.brand||'') + (a.model?' · '+a.model:'')) + '</em>' +
+            '<span style="color:var(--muted);font-size:11px">家电清单 · ' + (a.qty||1) + '台</span></div>' +
+            '<div class="citem-r" style="font-weight:600;color:var(--green)">-' + fmtMoney(appAmt) + '</div>' +
+          '</div>';
+          anyItem = true;
+        });
+      }
+      if(!anyItem) bListHtml = '<div class="empty">暂无已付款项。</div>';
+    }
+    $('#budgetList').innerHTML = bListHtml;
 
     // 台账自身的 stats（不含预算，预算已独立到上方）
     var catHtml = Object.keys(byCat).map(function(k){ return esc(k) + ' ' + fmtMoney(byCat[k]); }).join('，');
@@ -2133,7 +2186,6 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(t.closest('#costAdd')){ openCostEditor(null); return; }
     if(t.closest('#costCsv')){ exportCostsCsv(); return; }
     if(t.closest('#budgetEdit')){
-      // 点总预算数字 → 弹出 prompt 编辑。用原生 prompt 就够，预算不是高频操作
       var cur = S.budget ? String(S.budget) : '';
       var v = prompt('设置本次装修总预算（¥）', cur);
       if(v === null) return;
@@ -2143,6 +2195,37 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       save();
       renderCosts();
       toast('总预算已更新');
+      return;
+    }
+    if(t.closest('#budgetEdit2')){
+      var cur = S.budget ? String(S.budget) : '';
+      var v = prompt('设置本次装修总预算（¥）', cur);
+      if(v === null) return;
+      var n = Number(String(v).replace(/[¥,\s]/g,''));
+      if(!isFinite(n) || n < 0){ toast('请输入一个不小于 0 的金额'); return; }
+      S.budget = Math.round(n * 100) / 100;
+      save();
+      renderCosts();
+      toast('总预算已更新');
+      return;
+    }
+    var bfBtn = t.closest('#budgetFilters button[data-bf]');
+    if(bfBtn){ S.ui.budgetFilter = bfBtn.dataset.bf; saveSoon(); renderCosts(); return; }
+    if(t.closest('#budgetCsv')){
+      var rows = [['来源','日期','项目','类别','数量','单价','金额']];
+      Object.keys(S.costs).forEach(function(id){
+        var c = S.costs[id]; if(c.status !== 'p') return;
+        rows.push(['费用台账', c.date||'', c.subject||'', c.cat||'', '1', c.amount||'', c.amount||'']);
+      });
+      Object.keys(S.apps).forEach(function(u){
+        var a = S.apps[u]; if(!a || !a.paid || !a.price) return;
+        rows.push(['家电清单', a.buyDate||'', a.name||'', (a.brand||'')+(a.model?' '+a.model:''), a.qty||1, a.price||'', (Number(a.price)||0)*(a.qty||1)]);
+      });
+      var csv = rows.map(function(r){ return r.map(function(x){ return '"' + String(x).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+      var blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '预算已付明细_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+      toast('预算明细已导出');
       return;
     }
     var nrmkToggle = t.closest('.nrmk .toggle');
