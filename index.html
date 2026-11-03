@@ -434,6 +434,24 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 /* ---------- 物品清单 ---------- */
 .appbar{display:flex;gap:8px;margin:0 14px 10px}
 .appbar .sbtn{flex:1}
+
+/* ---------- 列表项基础（费用 costc + 材料 mat-item 共享） ---------- */
+.costc, .mat-item{padding:10px 12px;background:var(--card);border:1px solid var(--line2);border-radius:10px;margin-bottom:8px;position:relative}
+.costc, .costc *{cursor:pointer}
+.mat-item{cursor:default}
+.mat-item .iconbtn{cursor:pointer}
+.cdate{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:3px;letter-spacing:.2px}
+.csubj{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.csubj em{font-style:normal;font-size:12px;color:var(--muted);font-weight:400}
+.csubj .catpill{font-size:11px;padding:2px 7px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--muted)}
+.camount{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;margin-top:4px;color:var(--text);display:flex;align-items:center;gap:6px}
+.camount .csts{font-size:10.5px;padding:2px 6px;border-radius:5px;background:var(--green-bg);color:var(--green);font-weight:500}
+.camount .csts.w{background:var(--amber-bg);color:var(--amber)}
+.camount .csts.r{background:var(--red-bg);color:var(--red)}
+.cmeta{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.crmk{font-size:12.5px;color:var(--text);background:var(--card2);border-radius:8px;padding:7px 9px;margin-top:5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.mat-item .matactions{position:absolute;top:10px;right:10px;display:flex;gap:4px}
+.mat-item .csubj, .mat-item .camount, .mat-item .cmeta{padding-right:60px}  /* 给右侧 iconbtn 让位 */
 .appc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;margin:0 14px 10px;cursor:pointer}
 .appc .arow1{display:flex;align-items:center;gap:8px;min-height:28px}
 .appc .aname{font-size:15px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -717,6 +735,44 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
     </div>
   </div>
 
+  <div class="sheet" id="matSheet">
+    <div class="sheet-panel">
+      <div class="sh-head">
+        <h2 id="matTitle">新增材料</h2>
+        <button class="iconbtn" id="closeMat" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+      </div>
+      <div class="sh-body">
+        <div class="apgrid">
+          <label class="rfield"><span>分类</span><select id="matCat" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px">
+            <option value="">（未分类）</option>
+            <option>板材</option><option>瓷砖地板</option><option>油漆涂料</option><option>水电材料</option><option>厨卫五金</option><option>门窗</option><option>吊顶</option><option>采暖</option><option>灯具</option><option>密封胶/辅材</option><option>其他</option>
+          </select></label>
+          <label class="rfield"><span>材料名</span><input id="matName" type="text" maxlength="30" placeholder="如：生态板、瓷砖、PPR水管"></label>
+        </div>
+        <div class="apgrid">
+          <label class="rfield"><span>品牌</span><input id="matBrand" type="text" maxlength="25" placeholder="如：兔宝宝、东鹏、金牛"></label>
+          <label class="rfield"><span>规格/厚度</span><input id="matSpec" type="text" maxlength="25" placeholder="如：18mm E0级、800×800、DN25"></label>
+        </div>
+        <div class="apgrid">
+          <label class="rfield"><span>数量</span><input id="matQty" type="text" inputmode="decimal" placeholder="如：20"></label>
+          <label class="rfield"><span>单位</span><input id="matUnit" type="text" maxlength="6" placeholder="如：张/㎡/m/箱"></label>
+          <label class="rfield"><span>单价 ¥</span><input id="matPrice" type="text" inputmode="decimal" placeholder="如：180"></label>
+        </div>
+        <label class="rfield"><span>合计 ¥（自动=数量×单价，可手改）</span><input id="matTotal" type="text" inputmode="decimal" placeholder="如：3600"></label>
+        <div class="apgrid">
+          <label class="rfield"><span>购买日期</span><input id="matDate" type="date"></label>
+          <label class="rfield"><span>店铺/渠道</span><input id="matPayee" type="text" maxlength="20" placeholder="如：XX建材市场 / 京东"></label>
+        </div>
+        <label class="rfield"><span>备注（保修卡号/位置/退货条款）</span><textarea id="matRmk" maxlength="80" placeholder="如：保修卡放客厅柜第2层；多退少补；质保5年" style="width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:8px 10px;font-size:14px;resize:vertical"></textarea></label>
+        <label class="rfield"><span>已付款</span><select id="matPaid" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;font-size:15px"><option value="1">已付款</option><option value="0">未付款</option></select></label>
+        <div class="rbtns" style="margin-bottom:14px">
+          <button class="sbtn danger-text" id="matDel" hidden>删除</button>
+          <button class="sbtn pri" id="matSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -783,6 +839,8 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
   S.photoQueue = S.photoQueue || [];
   S.budget = Number(S.budget) || 0;  // 本次装修总预算（独立于费用台账，自动扣减已付）
   S.modeKey = S.modeKey || '';         // 装修模式选择
+  S.firmKey = S.firmKey || '';         // 装修公司选择
+  S.materials = S.materials || {};    // 材料台账 {id:{cat,name,brand,spec,qty,unit,price,total,date,payee,paid,rmk}}
   S.ui.appFilter = S.ui.appFilter || 'all';
   S.ui.appSort = !!S.ui.appSort;
   S.ui = Object.assign({}, B.ui, S.ui || {});
@@ -1068,10 +1126,72 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       '<div class="mode-d-row"><span class="mode-d-lbl mode-d-bad">缺点</span><ul class="mode-d-list">' + m.cons.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('') + '</ul></div>';
   }
 
+  /* ---- 装修公司/品牌选择卡（结构完全复用 mode-card，UI 一模一样） ---- */
+  var FIRMS = [
+    {k:'yixing', n:'业之峰', tag:'直营体系', p:'1997年起',
+     pros:['全国直营统一标准，施工规范较稳定','环保材料路线，VOC 控制严格','质保体系成熟，水电 5 年防水 10 年','报价透明，预算审计规范'],
+     cons:['价格偏贵——同档次比本地公司贵 15%~25%','设计偏保守，个性化创意受限','流程繁琐，确认节点多','后期增项管理严格但反应慢'],
+     who:'预算充足 · 重视环保 · 怕麻烦想省心'
+    },
+    {k:'dongyi', n:'东易日盛', tag:'上市公司', p:'A股上市',
+     pros:['A股上市公司，财务稳健不会跑路','设计师体系强，原创性相对行业较高','数字化管理，工期/节点可视化','材料供应链集中，能拿到品牌底价'],
+     cons:['设计费偏高（15%~25% 占比）','施工队外包，水平可能看运气','签合同时要细看"非责任条款"','小城市点少，三四线覆盖有限'],
+     who:'大户型别墅 · 要个性化设计 · 不想装修中翻车'
+    },
+    {k:'shengdu', n:'圣都家装', tag:'整装套餐', p:'一口价',
+     pros:['主打"整装套餐"，一口价包含设计+施工+主材+家具','有"20 项服务承诺"，超时超期有赔付','展厅大，材料实物可看可挑','全国门店覆盖广'],
+     cons:['套餐内款式固定，可选范围窄','升级/换款加价幅度大','后期维保流程较长','设计以"快周转"为主，不够精细'],
+     who:'时间少 · 预算中等 · 喜欢一口价省心'
+    },
+    {k:'kaiti', n:'金螳螂家装', tag:'精装背景', p:'工装背景',
+     pros:['有上市工装公司背景，工程管理经验足','对大户型/别墅/工装改家装有优势','材料供应链能拿到工程级渠道价','团队大，各工种齐全，协调能力强'],
+     cons:['更擅长工装，家装是新业务线','设计师水平参差不齐','报价体系偏工装逻辑，家装细节容易漏','签单后交接周期长'],
+     who:'别墅大平层 · 有工装改造需求 · 预算充足'
+    },
+    {k:'xingyi', n:'星艺装饰', tag:'老牌名企', p:'广东起家',
+     pros:['1992 年成立的老牌公司，行业口碑积累久','覆盖城市多，广东/华南地区口碑好','报价体系成熟，预算准确率相对高','施工队相对稳定，不容易换师傅'],
+     cons:['不同城市分公司水平差异大','部分城市以加盟为主，管理松','设计风格偏传统审美','数字化程度较低，要靠人盯'],
+     who:'华南地区 · 偏好传统稳重风格 · 想找靠谱老牌'
+    },
+    {k:'local', n:'本地口碑装修队', tag:'熟人推荐', p:'灵活',
+     pros:['价格最低——比一线公司省 30%~40%','沟通灵活，改起来随叫随到','师傅手艺可能不错（靠口碑活下来的）','增项相对好谈'],
+     cons:['无公司主体，出事找不到人','售后无质保，漏水漏电自己扛','合同不规范，容易踩"口头承诺不算数"坑','材料真假全靠你自己懂','施工队稳定性差，今天这伙明天那伙'],
+     who:'预算最紧 · 自己懂装修能盯工地 · 有靠谱熟人引荐'
+    }
+  ];
+  function firmCardHTML(){
+    var selected = S.firmKey || '';
+    var btnHtml = FIRMS.map(function(f){
+      var on = f.k === selected ? ' on' : '';
+      var sel = selected && !on ? ' style="opacity:.55"' : '';
+      return '<button data-firm="' + f.k + '" class="mode-btn' + on + '"' + sel + '>' +
+        '<b>' + esc(f.n) + '</b><em>' + esc(f.tag) + '</em><small>' + esc(f.p) + '</small></button>';
+    }).join('');
+    return '<div class="mcard mode-card">' +
+      '<div class="mhead"><div><h2>装修公司选择</h2><p class="msub">6 种常见公司类型优缺点对比 · 选定后方便你后续记录联系方式</p></div></div>' +
+      '<div class="mode-btns">' + btnHtml + '</div>' +
+      '<div class="mode-detail" id="firmDetail"></div>' +
+    '</div>';
+  }
+  function renderFirmDetail(){
+    var el = document.getElementById('firmDetail'); if(!el) return;
+    var k = S.firmKey; var f = FIRMS.find(function(x){ return x.k === k; });
+    if(!f){
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:14px 4px">↑ 点上面按钮查看这家公司的真实优缺点和适合人群。</div>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="mode-d-head"><b>' + esc(f.n) + '</b> · ' + esc(f.tag) + ' <em>' + esc(f.p) + '</em></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-good">适合人群</span><span>' + esc(f.who) + '</span></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-good">优点</span><ul class="mode-d-list">' + f.pros.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('') + '</ul></div>' +
+      '<div class="mode-d-row"><span class="mode-d-lbl mode-d-bad">缺点</span><ul class="mode-d-list">' + f.cons.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('') + '</ul></div>';
+  }
+
   function scheduleView(){
     var sc = D.schedule;
     return '<section class="view' + (S.ui.tab==='s'?' on':'') + '" data-tab="s">' +
       modeCardHTML() +
+      firmCardHTML() +
       '<div class="print-head"><h2>' + esc(sc.title) + '</h2><p>标准工期 ' + esc(sc.days) + ' · 8 阶段 / 25 个动作</p></div>' +
       '<div class="mcard">' +
         '<div class="mhead"><div><h2>' + esc(sc.title) + '</h2><p class="msub">8 阶段 · 25 个动作 · 标准工期 ' + esc(sc.days) + '</p></div>' +
@@ -1081,7 +1201,51 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
         '<p class="hint">' + esc(sc.note) + '</p>' +
       '</div>' +
       '<div class="stages">' + sc.stages.map(stageHTML).join('') + '</div>' +
+      materialsCardHTML() +
     '</section>';
+  }
+
+  /* ---- 材料台账（结构与费用列表 item 风格一致，记实际用料/品牌/规格/保修） ---- */
+  var MAT_CATS = ['板材','瓷砖地板','油漆涂料','水电材料','厨卫五金','门窗','吊顶','采暖','灯具','密封胶/辅材','其他'];
+  function materialsCardHTML(){
+    var ids = Object.keys(S.materials || {});
+    var totalMat = ids.reduce(function(s,id){ var m=S.materials[id]; return s + (Number(m.total)||0); }, 0);
+    var totalPaid = ids.filter(function(id){ return S.materials[id].paid; }).reduce(function(s,id){ var m=S.materials[id]; return s + (Number(m.total)||0); }, 0);
+    return '<div class="mcard">' +
+      '<div class="mhead"><div><h2>材料台账</h2><p class="msub">实际用了什么料 / 品牌规格厚度 / 保修卡位置 · 维修二手房都要查</p></div>' +
+        '<div class="mnum"><b id="num-mat">' + fmtMoney(totalMat) + '</b></div></div>' +
+      '<div class="mstats" id="stats-mat">共 ' + ids.length + ' 项 · 已付 ' + fmtMoney(totalPaid) + '</div>' +
+      '<div class="appbar">' +
+        '<button class="sbtn pri" id="matAdd">＋ 新增材料</button>' +
+        '<button class="sbtn" id="matCsv">导出 CSV</button>' +
+      '</div>' +
+      '<div id="materials"></div>' +
+    '</div>';
+  }
+  function renderMaterials(){
+    var el = document.getElementById('materials'); if(!el) return;
+    var ids = Object.keys(S.materials || {});
+    if(!ids.length){ el.innerHTML = '<div class="empty">还没登记材料 · 点「＋ 新增材料」开始<br>后续维修/换房卖屋时查保修/品牌必备</div>'; return; }
+    el.innerHTML = ids.map(function(id){
+      var m = S.materials[id];
+      var catPill = m.cat ? '<span class="catpill">' + esc(m.cat) + '</span>' : '';
+      var stsText = m.paid ? '已付款' : '未付款';
+      var stsCls = m.paid ? '' : 'w';
+      var specHtml = m.spec ? '<em>' + esc(m.spec) + '</em>' : '';
+      var brandHtml = m.brand ? esc(m.brand) : '未写品牌';
+      var qtyPriceHtml = (m.qty ? '× ' + esc(m.qty) + ' ' + esc(m.unit||'') + ' ' : '') + (m.price ? '@' + fmtMoney(Number(m.price)) : '');
+      return '<div class="mat-item" data-id="' + id + '">' +
+        '<div class="matactions">' +
+          '<button class="iconbtn matEdit" aria-label="编辑"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4v16h16v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+          '<button class="iconbtn matDel" aria-label="删除"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>' +
+        '</div>' +
+        '<div class="cdate">' + esc(m.date || '-') + '</div>' +
+        '<div class="csubj">' + catPill + ' ' + esc(m.name || '(材料)') + specHtml + '</div>' +
+        '<div class="camount">' + fmtMoney(Number(m.total)||0) + ' <span class="csts ' + stsCls + '">' + stsText + '</span></div>' +
+        '<div class="cmeta">品牌 ' + brandHtml + (m.payee ? ' · ' + esc(m.payee) : '') + (m.payee && qtyPriceHtml ? ' · ' : '') + qtyPriceHtml + '</div>' +
+        (m.rmk ? '<div class="crmk">' + esc(m.rmk) + '</div>' : '') +
+      '</div>';
+    }).join('');
   }
 
   $('#views').innerHTML = moduleView('v') + moduleView('a') + scheduleView() + applianceView() + costView();
@@ -1937,7 +2101,104 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     toast('已导出 CSV');
   }
 
-  /* ---------- Tab ---------- */
+  /* ---------- 材料台账 ---------- */
+  var _matId = null;
+  function openMatEditor(id){
+    _matId = id || null;
+    var m = id ? S.materials[id] : {};
+    $('#matTitle').textContent = id ? '编辑材料' : '新增材料';
+    $('#matCat').value = m.cat || '';
+    $('#matName').value = m.name || '';
+    $('#matBrand').value = m.brand || '';
+    $('#matSpec').value = m.spec || '';
+    $('#matQty').value = m.qty != null ? m.qty : '';
+    $('#matUnit').value = m.unit || '';
+    $('#matPrice').value = m.price != null ? m.price : '';
+    $('#matTotal').value = m.total != null ? m.total : '';
+    $('#matDate').value = m.date || todayStr();
+    $('#matPayee').value = m.payee || '';
+    $('#matPaid').value = m.paid ? '1' : '0';
+    $('#matRmk').value = m.rmk || '';
+    $('#matDel').hidden = !id;
+    openSheet('matSheet');
+  }
+  // 数量/单价变化时自动算合计
+  function _matAutoTotal(){
+    var q = Number(($('#matQty').value||'').replace(/[^\d.\-]/g,''));
+    var p = Number(($('#matPrice').value||'').replace(/[^\d.\-]/g,''));
+    if(isFinite(q) && isFinite(p) && q > 0 && p > 0){
+      $('#matTotal').value = String(Math.round(q*p*100)/100);
+    }
+  }
+  function saveMat(){
+    var name = ($('#matName').value||'').trim();
+    if(!name){ toast('材料名不能为空'); return; }
+    var qty = Number(($('#matQty').value||'').replace(/[^\d.\-]/g,''));
+    var price = Number(($('#matPrice').value||'').replace(/[^\d.\-]/g,''));
+    var total = Number(($('#matTotal').value||'').replace(/[^\d.\-]/g,''));
+    if(!isFinite(qty) || qty <= 0) qty = 1;
+    if(!isFinite(price) || price < 0) price = 0;
+    if(!isFinite(total) || total < 0) total = Math.round(qty*price*100)/100;
+    var id = _matId || 'mat_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    S.materials[id] = {
+      cat: $('#matCat').value,
+      name: name,
+      brand: ($('#matBrand').value||'').trim(),
+      spec: ($('#matSpec').value||'').trim(),
+      qty: Math.round(qty*100)/100,
+      unit: ($('#matUnit').value||'').trim(),
+      price: Math.round(price*100)/100,
+      total: Math.round(total*100)/100,
+      date: $('#matDate').value,
+      payee: ($('#matPayee').value||'').trim(),
+      paid: $('#matPaid').value === '1',
+      rmk: ($('#matRmk').value||'').trim()
+    };
+    save();
+    closeSheets();
+    renderMaterials();
+    toast(_matId ? '已更新材料' : '已登记材料');
+  }
+  function askDeleteMat(){
+    if(!_matId) return;
+    if(!confirm('确定删除这条材料记录？')) return;
+    delete S.materials[_matId];
+    save();
+    closeSheets();
+    renderMaterials();
+    toast('已删除');
+  }
+  function askDeleteMatItem(id){
+    if(!confirm('确定删除这条材料记录？')) return;
+    delete S.materials[id];
+    save();
+    renderMaterials();
+    toast('已删除');
+  }
+  function exportMatsCsv(){
+    var ids = Object.keys(S.materials || {});
+    if(!ids.length){ toast('暂无材料记录'); return; }
+    var rows = [['分类','材料名','品牌','规格/厚度','数量','单位','单价(元)','合计(元)','购买日期','店铺/渠道','已付款','备注']];
+    ids.forEach(function(id){
+      var m = S.materials[id];
+      rows.push([m.cat||'', m.name||'', m.brand||'', m.spec||'', m.qty||'', m.unit||'', m.price||'', m.total||'', m.date||'', m.payee||'', m.paid?'是':'否', m.rmk||'']);
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '装修材料台账_' + todayStr().replace(/\./g,'') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 600);
+    toast('已导出 CSV');
+  }
+  // 数量/单价变化自动算合计（事件委托，不需要等 DOM ready）
+  document.addEventListener('input', function(ev){
+    var id = ev.target && ev.target.id;
+    if(id === 'matQty' || id === 'matPrice') _matAutoTotal();
+  });
   function switchTab(t){
     S.ui.tab = t;
     save();
@@ -1945,7 +2206,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     $$('#topTabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     $$('.navbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     if(t === 'cost') renderCosts();
-    if(t === 's') renderModeDetail();
+    if(t === 's'){ renderModeDetail(); renderFirmDetail(); renderMaterials(); }
     window.scrollTo(0,0);
   }
 
@@ -2290,6 +2551,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     if(costf){ S.ui.costStatus = costf.dataset.f; save(); renderCosts(); return; }
     if(t.closest('#costAdd')){ openCostEditor(null); return; }
     if(t.closest('#costCsv')){ exportCostsCsv(); return; }
+    // --- 材料台账 handlers ---
+    if(t.closest('#matAdd')){ openMatEditor(null); return; }
+    if(t.closest('#closeMat')){ closeSheets(); return; }
+    if(t.closest('#matSave')){ saveMat(); return; }
+    if(t.closest('#matDel')){ askDeleteMat(); return; }
+    var matEdit = t.closest('.matEdit');
+    if(matEdit){ openMatEditor(matEdit.closest('[data-id]').dataset.id); return; }
+    var matDelBtn = t.closest('.matDel');
+    if(matDelBtn){ askDeleteMatItem(matDelBtn.closest('[data-id]').dataset.id); return; }
+    if(t.closest('#matCsv')){ exportMatsCsv(); return; }
     if(t.closest('#budgetEdit')){
       var cur = S.budget ? String(S.budget) : '';
       var v = prompt('设置本次装修总预算（¥）', cur);
@@ -2317,7 +2588,9 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var bfBtn = t.closest('#budgetFilters button[data-bf]');
     if(bfBtn){ S.ui.budgetFilter = bfBtn.dataset.bf; saveSoon(); renderCosts(); return; }
     var modeBtn = t.closest('.mode-btn[data-mode]');
-    if(modeBtn){ S.modeKey = modeBtn.dataset.mode; saveSoon(); renderCosts(); renderModeDetail(); document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.toggle('on', b.dataset.mode === S.modeKey); }); toast('已选择：' + (MODES.find(function(x){return x.k===S.modeKey})||{}).n); return; }
+    if(modeBtn){ S.modeKey = modeBtn.dataset.mode; saveSoon(); renderCosts(); renderModeDetail(); document.querySelectorAll('.mode-btn[data-mode]').forEach(function(b){ b.classList.toggle('on', b.dataset.mode === S.modeKey); }); toast('已选择：' + (MODES.find(function(x){return x.k===S.modeKey})||{}).n); return; }
+    var firmBtn = t.closest('.mode-btn[data-firm]');
+    if(firmBtn){ S.firmKey = firmBtn.dataset.firm; saveSoon(); renderFirmDetail(); document.querySelectorAll('.mode-btn[data-firm]').forEach(function(b){ b.classList.toggle('on', b.dataset.firm === S.firmKey); }); toast('已选择：' + (FIRMS.find(function(x){return x.k===S.firmKey})||{}).n); return; }
     if(t.closest('#budgetCsv')){
       var rows = [['来源','日期','项目','类别','数量','单价','金额']];
       Object.keys(S.costs).forEach(function(id){
