@@ -1423,6 +1423,16 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       else if(c.status === 'w') sumWait += amt;
       else if(c.status === 'r') sumRef += amt;
     });
+    // 预算扣减口径 = 费用台账已付 + 家电清单已付（去重：家电填 price+paid=true 时若已同步进 costs，避免重复扣）
+    var sumAppPaid = 0, appPaidCnt = 0;
+    var syncedAmt = 0;  // 已同步进 costs 的家电金额（src='a' 且 status='p'）
+    cids.forEach(function(id){ var c = S.costs[id]; if(c.status === 'p' && c.src === 'a') syncedAmt += Number(c.amount) || 0; });
+    Object.keys(S.apps).forEach(function(u){
+      var a = S.apps[u];
+      if(a && a.paid && a.price){ sumAppPaid += (Number(a.price)||0) * (a.qty||1); appPaidCnt++; }
+    });
+    // 家电已付的净增量（已同步进 costs 的那部分不再加，避免重复扣）
+    var appDeltaPaid = Math.max(0, sumAppPaid - syncedAmt);
     $('#num-cost').textContent = cnt.all;
     $('#costCountTop').textContent = cnt.all;
     $('#num-budget').textContent = bud ? fmtMoney(bud) : '未设置';
@@ -1430,16 +1440,21 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
     });
-    // 装修总预算卡内部渲染（复用 mstats + pbar）
-    var rem = bud - sumPaid;
-    var pct = bud ? Math.min(100, Math.round(sumPaid / bud * 100)) : 0;
+    // 装修总预算卡内部渲染（复用 mstats + pbar，展示合并口径）
+    var totalPaidBudget = sumPaid + appDeltaPaid;  // 预算卡口径：费用台账已付 + 家电清单已付（去重后）
+    var rem = bud - totalPaidBudget;
+    var pct = bud ? Math.min(100, Math.round(totalPaidBudget / bud * 100)) : 0;
     var remCls = rem < 0 ? 'rem-neg' : (rem < bud*0.1 ? 'rem-warn' : 'rem-ok');
     if(bud){
+      var subTxt = [];
+      if(sumPaid) subTxt.push('台账 ' + fmtMoney(sumPaid));
+      if(appDeltaPaid) subTxt.push('家电 ' + fmtMoney(appDeltaPaid) + (appPaidCnt ? '(' + appPaidCnt + '台)' : ''));
       $('#stats-budget').innerHTML =
         '总预算 <b id="budgetEdit" title="点我修改预算">' + fmtMoney(bud) + '</b>' +
-        ' · 已付 <b>' + fmtMoney(sumPaid) + '</b>' +
+        ' · 已付 <b>' + fmtMoney(totalPaidBudget) + '</b>' +
         ' · 剩余 <b class="' + remCls + '">' + fmtMoney(rem) + '</b>' +
-        ' · 使用率 <b>' + pct + '%</b>';
+        ' · 使用率 <b>' + pct + '%</b>' +
+        '<br><span style="font-size:10.5px;opacity:.8">来源：' + (subTxt.length ? subTxt.join(' + ') : '暂无已付款项') + '</span>';
       var fill = $('#budgetFill');
       fill.style.width = pct + '%';
       fill.style.background = rem < 0 ? 'var(--red)' : (rem < bud*0.1 ? 'var(--warn, orange)' : 'var(--green)');
