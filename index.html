@@ -74,12 +74,21 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .mstats{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--muted)}
 .mstats em{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
 
-/* ---- 装修总预算卡：直接复用全局 mcard 样式，不造新 class ---- */
-#budgetEdit{cursor:pointer;border-bottom:1px dashed var(--line)}
-#stats-budget b{color:var(--text)}
-#stats-budget .rem-neg{color:var(--red)!important}
-#stats-budget .rem-warn{color:var(--warn, orange)!important}
-#stats-budget .rem-ok{color:var(--green)!important}
+/* ---- 装修总预算卡：保持 mcard 外框统一，内部结构独立 ---- */
+.budget-card{margin-top:12px}
+.budget-card .b-remaining{font-size:34px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin:4px 0 2px}
+.budget-card .b-remaining.neg{color:var(--red)}
+.budget-card .b-remaining.warn{color:var(--warn, orange)}
+.budget-card .b-remaining.ok{color:var(--green)}
+.budget-card .b-meta{color:var(--muted);font-size:12px;line-height:1.7;margin-top:2px}
+.budget-card .b-meta b{color:var(--text);font-weight:600}
+.budget-card .b-meta .clickable{cursor:pointer;border-bottom:1px dashed var(--line);color:var(--text)}
+.budget-card .b-pbar{height:14px;background:var(--card2);border-radius:7px;overflow:hidden;margin-top:8px}
+.budget-card .b-pbar i{display:block;height:100%;border-radius:7px;background:var(--green);transition:width .4s ease}
+.budget-card .b-sub{color:var(--muted);font-size:10.5px;margin-top:7px;opacity:.85}
+.budget-card .mstats, .budget-card .pbar{display:none}  /* 旧的灰色小字统计区隐藏，改用上面大字号主视觉 */
+@media print{ .budget-card{display:none!important} }
+@media (max-width: 520px){ .budget-card .b-remaining{font-size:28px} }
 .s-ok em{background:var(--green)}
 .s-fix em{background:var(--red)}
 .s-na em{background:var(--gray)}
@@ -1356,13 +1365,17 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var v = Number(n) || 0;
     return '¥' + v.toFixed(2);
   }
-  // 装修总预算独立卡片（费用台账卡的同级兄弟，完全复用 mcard 全局样式）
+  // 装修总预算独立卡片（保持 mcard 外框统一，内部大字主视觉）
   function budgetCardHTML(){
-    return '<div class="mcard">' +
+    return '<div class="mcard budget-card">' +
       '<div class="mhead">' +
         '<div><h2>装修总预算</h2><p class="msub">每一笔「已付」费用自动扣减剩余</p></div>' +
-        '<div class="mnum"><b id="num-budget"></b></div>' +
+        '<div class="mnum" style="display:none"><b id="num-budget"></b></div>' +
       '</div>' +
+      '<div class="b-remaining" id="bRemain"></div>' +
+      '<div class="b-pbar"><i id="bFill"></i></div>' +
+      '<div class="b-meta" id="bMeta"></div>' +
+      '<div class="b-sub" id="bSub"></div>' +
       '<div class="mstats" id="stats-budget"></div>' +
       '<div class="pbar" style="margin-top:8px"><i id="budgetFill"></i></div>' +
     '</div>';
@@ -1440,27 +1453,31 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
       b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
     });
-    // 装修总预算卡内部渲染（复用 mstats + pbar，展示合并口径）
-    var totalPaidBudget = sumPaid + appDeltaPaid;  // 预算卡口径：费用台账已付 + 家电清单已付（去重后）
+    // 装修总预算卡：大字主视觉渲染
+    var totalPaidBudget = sumPaid + appDeltaPaid;
     var rem = bud - totalPaidBudget;
     var pct = bud ? Math.min(100, Math.round(totalPaidBudget / bud * 100)) : 0;
-    var remCls = rem < 0 ? 'rem-neg' : (rem < bud*0.1 ? 'rem-warn' : 'rem-ok');
+    var remCls = rem < 0 ? 'neg' : (rem < bud*0.1 ? 'warn' : 'ok');
     if(bud){
+      $('#bRemain').textContent = fmtMoney(rem);
+      $('#bRemain').className = 'b-remaining ' + remCls;
+      var fillEl = $('#bFill');
+      fillEl.style.width = pct + '%';
+      fillEl.style.background = rem < 0 ? 'var(--red)' : (rem < bud*0.1 ? 'var(--warn, orange)' : 'var(--green)');
+      $('#bMeta').innerHTML =
+        '总预算 <b id="budgetEdit" class="clickable" title="点我修改预算">' + fmtMoney(bud) + '</b>' +
+        ' · 已付 <b>' + fmtMoney(totalPaidBudget) + '</b>' +
+        ' · 使用率 <b>' + pct + '%</b>';
       var subTxt = [];
       if(sumPaid) subTxt.push('台账 ' + fmtMoney(sumPaid));
       if(appDeltaPaid) subTxt.push('家电 ' + fmtMoney(appDeltaPaid) + (appPaidCnt ? '(' + appPaidCnt + '台)' : ''));
-      $('#stats-budget').innerHTML =
-        '总预算 <b id="budgetEdit" title="点我修改预算">' + fmtMoney(bud) + '</b>' +
-        ' · 已付 <b>' + fmtMoney(totalPaidBudget) + '</b>' +
-        ' · 剩余 <b class="' + remCls + '">' + fmtMoney(rem) + '</b>' +
-        ' · 使用率 <b>' + pct + '%</b>' +
-        '<br><span style="font-size:10.5px;opacity:.8">来源：' + (subTxt.length ? subTxt.join(' + ') : '暂无已付款项') + '</span>';
-      var fill = $('#budgetFill');
-      fill.style.width = pct + '%';
-      fill.style.background = rem < 0 ? 'var(--red)' : (rem < bud*0.1 ? 'var(--warn, orange)' : 'var(--green)');
+      $('#bSub').textContent = (subTxt.length ? '来源：' + subTxt.join(' + ') : '暂无已付款项') + '（Storage 原文件需在 Supabase Dashboard 清理）';
     } else {
-      $('#stats-budget').innerHTML = '<b id="budgetEdit" style="color:var(--muted)" title="点我设置本次装修总预算（自动扣减已付费用）">＋ 设置总预算（每笔「已付」自动扣减剩余）</b>';
-      $('#budgetFill').style.width = '0';
+      $('#bRemain').textContent = '未设置总预算';
+      $('#bRemain').className = 'b-remaining';
+      $('#bFill').style.width = '0';
+      $('#bMeta').innerHTML = '<span id="budgetEdit" class="clickable" title="点我设置本次装修总预算">＋ 点我设置总预算（自动扣减每笔已付）</span>';
+      $('#bSub').textContent = '';
     }
 
     // 台账自身的 stats（不含预算，预算已独立到上方）
