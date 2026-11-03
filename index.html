@@ -74,17 +74,17 @@ main{padding:0 13px calc(90px + env(safe-area-inset-bottom))}
 .mstats{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--muted)}
 .mstats em{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
 
-/* ---- 预算条带（费用台账卡片上方） ---- */
-.budget-bar{background:linear-gradient(135deg,rgba(34,160,107,.08),rgba(59,130,246,.06));border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;margin-bottom:12px}
-.budget-bar .brow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
-.budget-bar .bcell{display:flex;flex-direction:column;min-width:86px}
-.budget-bar .bcell.grow{flex:1;min-width:140px}
-.budget-bar .blabel{font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.3px}
-.budget-bar .bval{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-.3px}
-.budget-bar .bbar{width:100%;height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:4px}
-.budget-bar .bfill{height:100%;border-radius:6px;transition:width .4s ease}
-@media (max-width: 520px){ .budget-bar .bval{font-size:15px} .budget-bar .bcell{min-width:72px} }
-@media print{ .budget-bar{display:none} }
+/* ---- 装修总预算独立卡片 ---- */
+.budget-mcard .mnum b{font-size:15px}
+#budgetBar .brow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+#budgetBar .bcell{display:flex;flex-direction:column;min-width:86px}
+#budgetBar .bcell.grow{flex:1;min-width:140px}
+#budgetBar .blabel{font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.3px}
+#budgetBar .bval{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+#budgetBar .bbar{width:100%;height:10px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:6px}
+#budgetBar .bfill{height:100%;border-radius:6px;transition:width .4s ease}
+@media (max-width: 520px){ #budgetBar .bval{font-size:16px} #budgetBar .bcell{min-width:72px} }
+@media print{ .budget-mcard{display:none!important} }
 .s-ok em{background:var(--green)}
 .s-fix em{background:var(--red)}
 .s-na em{background:var(--gray)}
@@ -1361,10 +1361,20 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var v = Number(n) || 0;
     return '¥' + v.toFixed(2);
   }
+  // 装修总预算独立卡片（费用台账卡的同级兄弟）
+  function budgetCardHTML(){
+    return '<div class="mcard budget-mcard">' +
+      '<div class="mhead">' +
+        '<div><h2>装修总预算</h2><p class="msub">每一笔「已付」费用自动扣减剩余</p></div>' +
+        '<div class="mnum"><b id="num-budget"></b></div>' +
+      '</div>' +
+      '<div id="budgetBar"></div>' +
+    '</div>';
+  }
   function costView(){
     return '<section class="view' + (S.ui.tab==='cost'?' on':'') + '" data-tab="cost">' +
       '<div class="print-head"><h2>费用台账</h2><p>日期 · 项目 · 类别 · 金额 · 付款方式</p></div>' +
-      '<div id="budgetBar" class="budget-bar"></div>' +
+      budgetCardHTML() +
       '<div class="mcard">' +
         '<div class="mhead"><div><h2>费用台账</h2><p class="msub">记录装修每一笔开支，支持导出 CSV</p></div>' +
           '<div class="mnum"><b id="num-cost">0</b>笔</div></div>' +
@@ -1407,6 +1417,7 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     var cnt = {all:cids.length, p:0, w:0, r:0};
     var sumPaid = 0, sumWait = 0, sumRef = 0, sumMonth = 0;
     var nowMon = new Date().toISOString().slice(0,7);
+    var bud = Number(S.budget) || 0;
     var byCat = {};
     cids.forEach(function(id){
       var c = S.costs[id];
@@ -1418,12 +1429,12 @@ const DATA = {"modules":{"v":{"title":"验房清单","note":"核心原则：先�
     });
     $('#num-cost').textContent = cnt.all;
     $('#costCountTop').textContent = cnt.all;
+    $('#num-budget').textContent = bud ? fmtMoney(bud) : '未设置';
     $$('#costFilters button[data-f]').forEach(function(b){
       b.querySelector('i').textContent = cnt[b.dataset.f] || 0;
       b.classList.toggle('on', S.ui.costStatus === b.dataset.f);
     });
-    // 顶部独立预算条带（费用台账卡片上方）
-    var bud = Number(S.budget) || 0;
+    // 装修总预算卡内部渲染（和费用台账卡独立）
     var rem = bud - sumPaid;
     var pct = bud ? Math.min(100, Math.round(sumPaid / bud * 100)) : 0;
     var barFill = bud ? (rem < 0 ? 'var(--red)' : (rem < bud*0.1 ? 'var(--warn, orange)' : 'var(--ok, #22a06b)')) : 'var(--muted)';
